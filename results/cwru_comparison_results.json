@@ -1,0 +1,326 @@
+{
+  "start_time": "2026-06-04T14:32:02.128247",
+  "runs": [
+    {
+      "model": "WaPIGT",
+      "task": "CWRU_T01",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.465,
+      "test_acc": 0.345
+    },
+    {
+      "model": "WaPIGT",
+      "task": "CWRU_T01",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.54,
+      "test_acc": 0.4
+    },
+    {
+      "model": "WaPIGT",
+      "task": "CWRU_T01",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.455,
+      "test_acc": 0.365
+    },
+    {
+      "model": "WaPIGT",
+      "task": "CWRU_T05",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.44,
+      "test_acc": 0.455
+    },
+    {
+      "model": "WaPIGT",
+      "task": "CWRU_T05",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.5,
+      "test_acc": 0.43
+    },
+    {
+      "model": "WaPIGT",
+      "task": "CWRU_T05",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.375,
+      "test_acc": 0.385
+    },
+    {
+      "model": "WDCNN",
+      "task": "CWRU_T01",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.83,
+      "test_acc": 0.7
+    },
+    {
+      "model": "WDCNN",
+      "task": "CWRU_T01",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.855,
+      "test_acc": 0.735
+    },
+    {
+      "model": "WDCNN",
+      "task": "CWRU_T01",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.86,
+      "test_acc": 0.715
+    },
+    {
+      "model": "WDCNN",
+      "task": "CWRU_T05",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.84,
+      "test_acc": 0.87
+    },
+    {
+      "model": "WDCNN",
+      "task": "CWRU_T05",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.835,
+      "test_acc": 0.89
+    },
+    {
+      "model": "WDCNN",
+      "task": "CWRU_T05",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.84,
+      "test_acc": 0.86
+    },
+    {
+      "model": "TICNN",
+      "task": "CWRU_T01",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.98,
+      "test_acc": 0.765
+    },
+    {
+      "model": "TICNN",
+      "task": "CWRU_T01",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.965,
+      "test_acc": 0.795
+    },
+    {
+      "model": "TICNN",
+      "task": "CWRU_T01",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.965,
+      "test_acc": 0.755
+    },
+    {
+      "model": "TICNN",
+      "task": "CWRU_T05",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.875,
+      "test_acc": 1.0
+    },
+    {
+      "model": "TICNN",
+      "task": "CWRU_T05",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.885,
+      "test_acc": 0.995
+    },
+    {
+      "model": "TICNN",
+      "task": "CWRU_T05",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.93,
+      "test_acc": 0.975
+    },
+    {
+      "model": "MSCNN",
+      "task": "CWRU_T01",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.955,
+      "test_acc": 0.77
+    },
+    {
+      "model": "MSCNN",
+      "task": "CWRU_T01",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.96,
+      "test_acc": 0.79
+    },
+    {
+      "model": "MSCNN",
+      "task": "CWRU_T01",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.96,
+      "test_acc": 0.745
+    },
+    {
+      "model": "MSCNN",
+      "task": "CWRU_T05",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.885,
+      "test_acc": 0.965
+    },
+    {
+      "model": "MSCNN",
+      "task": "CWRU_T05",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.89,
+      "test_acc": 0.995
+    },
+    {
+      "model": "MSCNN",
+      "task": "CWRU_T05",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.9,
+      "test_acc": 0.98
+    },
+    {
+      "model": "PhysFormer",
+      "task": "CWRU_T01",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.84,
+      "test_acc": 0.74
+    },
+    {
+      "model": "PhysFormer",
+      "task": "CWRU_T01",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.785,
+      "test_acc": 0.64
+    },
+    {
+      "model": "PhysFormer",
+      "task": "CWRU_T01",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.74,
+      "test_acc": 0.7
+    },
+    {
+      "model": "PhysFormer",
+      "task": "CWRU_T05",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.755,
+      "test_acc": 0.755
+    },
+    {
+      "model": "PhysFormer",
+      "task": "CWRU_T05",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.74,
+      "test_acc": 0.795
+    },
+    {
+      "model": "PhysFormer",
+      "task": "CWRU_T05",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.735,
+      "test_acc": 0.74
+    },
+    {
+      "model": "ViT1D",
+      "task": "CWRU_T01",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.905,
+      "test_acc": 0.75
+    },
+    {
+      "model": "ViT1D",
+      "task": "CWRU_T01",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.865,
+      "test_acc": 0.735
+    },
+    {
+      "model": "ViT1D",
+      "task": "CWRU_T01",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.84,
+      "test_acc": 0.76
+    },
+    {
+      "model": "ViT1D",
+      "task": "CWRU_T05",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.865,
+      "test_acc": 0.91
+    },
+    {
+      "model": "ViT1D",
+      "task": "CWRU_T05",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.88,
+      "test_acc": 0.935
+    },
+    {
+      "model": "ViT1D",
+      "task": "CWRU_T05",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.845,
+      "test_acc": 0.915
+    }
+  ],
+  "end_time": "2026-06-04T14:53:00.896116",
+  "model_summary": {
+    "WaPIGT": {
+      "mean": 0.39666666666666667,
+      "std": 0.03726779962499651,
+      "n": 6
+    },
+    "WDCNN": {
+      "mean": 0.795,
+      "std": 0.07947746011710911,
+      "n": 6
+    },
+    "TICNN": {
+      "mean": 0.8808333333333332,
+      "std": 0.11009150234640677,
+      "n": 6
+    },
+    "MSCNN": {
+      "mean": 0.8741666666666665,
+      "std": 0.10698195590326849,
+      "n": 6
+    },
+    "PhysFormer": {
+      "mean": 0.7283333333333334,
+      "std": 0.04836206042848971,
+      "n": 6
+    },
+    "ViT1D": {
+      "mean": 0.8341666666666666,
+      "std": 0.08647816037718556,
+      "n": 6
+    }
+  }
+}

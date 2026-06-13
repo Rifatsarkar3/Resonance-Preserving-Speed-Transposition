@@ -1,0 +1,29 @@
+{
+  "start_time": "2026-06-11T12:15:19.856544",
+  "runs": [
+    {
+      "model": "WaPIGT-MS+SRA",
+      "task": "JNU_T01",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 1.0,
+      "test_acc": 0.795
+    },
+    {
+      "model": "WaPIGT-MS+SRA",
+      "task": "JNU_T01",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 1.0,
+      "test_acc": 0.805
+    },
+    {
+      "model": "WaPIGT-MS+SRA",
+      "task": "JNU_T01",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.99,
+      "test_acc": 0.84
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "start_time": "2026-06-13T12:29:53.999763",
+  "runs": [
+    {
+      "model": "WaPIGT",
+      "method": "RPCL-anchor",
+      "task": "PU_S1",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.96,
+      "acc": 0.74,
+      "mf1": 0.7448184800101176,
+      "auroc": 0.9161296997755332,
+      "kappa": 0.6572265625
+    },
+    {
+      "model": "WaPIGT",
+      "method": "RPCL-anchor",
+      "task": "PU_S1",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.9333333333333333,
+      "acc": 0.5977777777777777,
+      "mf1": 0.5903218221109529,
+      "auroc": 0.8296832912457912,
+      "kappa": 0.47444831591173053
+    },
+    {
+      "model": "WaPIGT",
+      "method": "RPCL-anchor",
+      "task": "PU_S1",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.9555555555555556,
+      "acc": 0.6711111111111111,
+      "mf1": 0.6667425351188999,
+      "auroc": 0.8312959455667789,
+      "kappa": 0.567925262748151
+    },
+    {
+      "model": "WaPIGT",
+      "method": "RPCL-anchor",
+      "task": "PU_S2",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 1.0,
+      "acc": 0.6577777777777778,
+      "mf1": 0.6371903185140784,
+      "auroc": 0.929471450617284,
+      "kappa": 0.5401154688433207
+    },
+    {
+      "model": "WaPIGT",
+      "method": "RPCL-anchor",
+      "task": "PU_S2",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 1.0,
+      "acc": 0.68,
+      "mf1": 0.6103169909494793,
+      "auroc": 0.9140568883277216,
+      "kappa": 0.5728692900929405
+    },
+    {
+      "model": "WaPIGT",
+      "method": "RPCL-anchor",
+      "task": "PU_S2",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 1.0,
+      "acc": 0.6355555555555555,
+      "mf1": 0.5922187968314603,
+      "auroc": 0.9109525813692481,
+      "kappa": 0.510934393638171
+    }
+  ],
+  "end_time": "2026-06-13T12:36:39.007412"
+}

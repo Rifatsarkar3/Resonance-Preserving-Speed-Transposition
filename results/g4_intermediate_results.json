@@ -1,0 +1,27 @@
+{
+  "start_time": "2026-06-12T23:27:08.557706",
+  "runs": [
+    {
+      "model": "WaPIGT+RPST-intermediate",
+      "task": "JNU_T01",
+      "seed": 42,
+      "val_acc": 1.0,
+      "test_acc": 0.975
+    },
+    {
+      "model": "WaPIGT+RPST-intermediate",
+      "task": "JNU_T01",
+      "seed": 1337,
+      "val_acc": 1.0,
+      "test_acc": 0.895
+    },
+    {
+      "model": "WaPIGT+RPST-intermediate",
+      "task": "JNU_T01",
+      "seed": 2025,
+      "val_acc": 1.0,
+      "test_acc": 0.795
+    }
+  ],
+  "end_time": "2026-06-12T23:30:30.422511"
+}

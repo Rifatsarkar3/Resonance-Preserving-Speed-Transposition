@@ -1,0 +1,86 @@
+{
+  "start_time": "2026-06-12T23:30:34.075172",
+  "runs": [
+    {
+      "model": "WDCNN",
+      "lr": 0.0003,
+      "task": "JNU_T02",
+      "seed": 42,
+      "val_acc": 0.915,
+      "test_acc": 0.995
+    },
+    {
+      "model": "WDCNN",
+      "lr": 0.003,
+      "task": "JNU_T02",
+      "seed": 42,
+      "val_acc": 0.945,
+      "test_acc": 0.97
+    },
+    {
+      "model": "TICNN",
+      "lr": 0.0003,
+      "task": "JNU_T02",
+      "seed": 42,
+      "val_acc": 0.81,
+      "test_acc": 0.96
+    },
+    {
+      "model": "TICNN",
+      "lr": 0.003,
+      "task": "JNU_T02",
+      "seed": 42,
+      "val_acc": 0.79,
+      "test_acc": 0.995
+    },
+    {
+      "model": "MSCNN",
+      "lr": 0.0003,
+      "task": "JNU_T02",
+      "seed": 42,
+      "val_acc": 0.885,
+      "test_acc": 0.995
+    },
+    {
+      "model": "MSCNN",
+      "lr": 0.003,
+      "task": "JNU_T02",
+      "seed": 42,
+      "val_acc": 0.93,
+      "test_acc": 0.995
+    },
+    {
+      "model": "PhysFormer",
+      "lr": 0.0003,
+      "task": "JNU_T02",
+      "seed": 42,
+      "val_acc": 0.86,
+      "test_acc": 0.915
+    },
+    {
+      "model": "PhysFormer",
+      "lr": 0.003,
+      "task": "JNU_T02",
+      "seed": 42,
+      "val_acc": 0.955,
+      "test_acc": 0.88
+    },
+    {
+      "model": "ViT1D",
+      "lr": 0.0003,
+      "task": "JNU_T02",
+      "seed": 42,
+      "val_acc": 0.79,
+      "test_acc": 0.735
+    },
+    {
+      "model": "ViT1D",
+      "lr": 0.003,
+      "task": "JNU_T02",
+      "seed": 42,
+      "val_acc": 0.85,
+      "test_acc": 0.955
+    }
+  ],
+  "end_time": "2026-06-12T23:31:30.265778"
+}

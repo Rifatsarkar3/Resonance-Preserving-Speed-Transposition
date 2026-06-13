@@ -1,0 +1,51 @@
+# WaPIGT Configuration File
+# Update these paths to match your data locations
+
+data:
+  cwru_raw_root: "data/raw"
+  pu_raw_root: "data/raw"
+  jnu_raw_root: "data/raw"
+  processed_root: "data/processed"
+  splits_root: "data/splits"
+
+model:
+  variant: "3M"
+  hidden_dim: 96
+  n_encoder_layers: 4
+  n_heads: 8
+  mlp_dim: 384
+  dropout: 0.3
+  n_gat_heads: 4
+  gat_dropout: 0.3
+  filter_order: 8
+  n_frames: 16
+  scr_lambda: 0.1
+  scr_warmup_epochs: 10
+  triplet_lambda: 0.1
+  triplet_margin: 0.5
+  triplet_warmup_epochs: 20
+
+training:
+  learning_rate: 5.0e-4
+  weight_decay: 1.0e-4
+  batch_size: 32
+  n_epochs: 200
+  gradient_clip_norm: 1.0
+  scheduler: "cosine"
+  warmup_epochs: 15
+  precision: "fp32"
+  checkpoint_dir: "outputs/checkpoints"
+  save_interval: 10
+  num_workers: 0
+  pin_memory: false
+  persistent_workers: false
+  prefetch_factor: null
+
+evaluation:
+  metrics_dir: "outputs/metrics"
+  latency_n_warmup: 50
+  latency_n_runs: 500
+  log_dir: "outputs/logs"
+
+seed: 42
+device: "cuda"

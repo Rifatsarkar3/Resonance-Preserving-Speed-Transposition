@@ -1,0 +1,10 @@
+{
+  "WDCNN": {
+    "n_wapigt": 11,
+    "n_baseline": 9,
+    "wapigt_mean": 0.864318181818182,
+    "baseline_mean": 0.9038888888888889,
+    "wilcoxon_stat": 21.0,
+    "p_value": 0.91015625,
+    "cohen_d": -0.3751522091673678,
+    "significant_at_005": 

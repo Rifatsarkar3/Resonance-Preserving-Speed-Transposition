@@ -1,0 +1,108 @@
+{
+  "start_time": "2026-06-11T11:21:44.766340",
+  "configs": {
+    "ABL-0_BaseTransformer": {
+      "seeds": [
+        {
+          "seed": 42,
+          "error": "too many values to unpack (expected 2)"
+        },
+        {
+          "seed": 1337,
+          "error": "too many values to unpack (expected 2)"
+        },
+        {
+          "seed": 2025,
+          "error": "too many values to unpack (expected 2)"
+        }
+      ],
+      "mean_test": null,
+      "std_test": null
+    },
+    "ABL-1_+MST": {
+      "seeds": [
+        {
+          "seed": 42,
+          "val": 1.0,
+          "test": 0.965
+        },
+        {
+          "seed": 1337,
+          "val": 1.0,
+          "test": 0.835
+        },
+        {
+          "seed": 2025,
+          "val": 0.995,
+          "test": 0.87
+        }
+      ],
+      "mean_test": 0.89,
+      "std_test": 0.05492419017761361
+    },
+    "ABL-2_+MST+PIFFG": {
+      "seeds": [
+        {
+          "seed": 42,
+          "val": 0.99,
+          "test": 0.955
+        },
+        {
+          "seed": 1337,
+          "val": 1.0,
+          "test": 0.94
+        },
+        {
+          "seed": 2025,
+          "val": 1.0,
+          "test": 0.955
+        }
+      ],
+      "mean_test": 0.9500000000000001,
+      "std_test": 0.007071067811865481
+    },
+    "ABL-3_+MST+PIFFG+SCR": {
+      "seeds": [
+        {
+          "seed": 42,
+          "val": 1.0,
+          "test": 0.96
+        },
+        {
+          "seed": 1337,
+          "val": 1.0,
+          "test": 0.96
+        },
+        {
+          "seed": 2025,
+          "val": 1.0,
+          "test": 0.935
+        }
+      ],
+      "mean_test": 0.9516666666666667,
+      "std_test": 0.01178511301977575
+    },
+    "ABL-4_Full_WaPIGT": {
+      "seeds": [
+        {
+          "seed": 42,
+          "val": 1.0,
+          "test": 0.96
+        },
+        {
+          "seed": 1337,
+          "val": 1.0,
+          "test": 0.95
+        },
+        {
+          "seed": 2025,
+          "val": 1.0,
+          "test": 0.95
+        }
+      ],
+      "mean_test": 0.9533333333333333,
+      "std_test": 0.004714045207910321
+    }
+  },
+  "end_time": "2026-06-11T11:32:22.164561"
+}

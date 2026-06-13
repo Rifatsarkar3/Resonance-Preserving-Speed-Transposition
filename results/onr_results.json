@@ -1,0 +1,45 @@
+{
+  "start_time": "2026-06-11T12:07:07.314785",
+  "runs": [
+    {
+      "model": "WaPIGT-MS+ONR",
+      "task": "JNU_T01",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 0.94,
+      "test_acc": 0.69
+    },
+    {
+      "model": "WaPIGT-MS+ONR",
+      "task": "JNU_T01",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 0.92,
+      "test_acc": 0.775
+    },
+    {
+      "model": "WaPIGT-MS+ONR",
+      "task": "JNU_T01",
+      "seed": 2025,
+      "status": "success",
+      "val_acc": 0.75,
+      "test_acc": 0.74
+    },
+    {
+      "model": "WaPIGT-MS+ONR",
+      "task": "JNU_T03",
+      "seed": 42,
+      "status": "success",
+      "val_acc": 1.0,
+      "test_acc": 0.86
+    },
+    {
+      "model": "WaPIGT-MS+ONR",
+      "task": "JNU_T03",
+      "seed": 1337,
+      "status": "success",
+      "val_acc": 1.0,
+      "test_acc": 0.755
+    }
+  ]
+}
