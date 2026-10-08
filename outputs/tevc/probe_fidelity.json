@@ -1,0 +1,52 @@
+{
+ "reference": "real 1000 rpm, half B",
+ "median_smd_by_family": {
+  "time": {
+   "real 600 rpm (no transposition)": 1.6736139059066772,
+   "RPST 600->1000": 9.484293937683105,
+   "resampling 600->1000": 8.44847583770752,
+   "real 1000 rpm half A (noise floor)": 0.26383984088897705
+  },
+  "fft_band": {
+   "real 600 rpm (no transposition)": 1.4127120971679688,
+   "RPST 600->1000": 1.3076486587524414,
+   "resampling 600->1000": 4.364550590515137,
+   "real 1000 rpm half A (noise floor)": 0.27168241143226624
+  },
+  "wpt_loge": {
+   "real 600 rpm (no transposition)": 1.2181377410888672,
+   "RPST 600->1000": 1.3736047744750977,
+   "resampling 600->1000": 4.826146125793457,
+   "real 1000 rpm half A (noise floor)": 0.32703691720962524
+  },
+  "wpt_kurt": {
+   "real 600 rpm (no transposition)": 0.5965780019760132,
+   "RPST 600->1000": 0.9048356413841248,
+   "resampling 600->1000": 0.5912750363349915,
+   "real 1000 rpm half A (noise floor)": 0.18816305696964264
+  },
+  "wpt_crest": {
+   "real 600 rpm (no transposition)": 0.5284682512283325,
+   "RPST 600->1000": 0.7270580530166626,
+   "resampling 600->1000": 0.5403428673744202,
+   "real 1000 rpm half A (noise floor)": 0.1765965223312378
+  },
+  "env_order": {
+   "real 600 rpm (no transposition)": 0.7928279638290405,
+   "RPST 600->1000": 0.6565860509872437,
+   "resampling 600->1000": 0.6539006233215332,
+   "real 1000 rpm half A (noise floor)": 0.16531933844089508
+  }
+ },
+ "n_features_rpst_worse_than_no_transposition": 403,
+ "worst_rpst_features": [
+  "t_log_mabs",
+  "t_log_rms",
+  "t_log_std",
+  "t_log_p2p",
+  "t_log_peak",
+  "t_shape",
+  "t_clearance",
+  "t_impulse"
+ ]
+}
