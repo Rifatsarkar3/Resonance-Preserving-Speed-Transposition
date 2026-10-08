@@ -21,7 +21,10 @@ class JNU:
     cap_fit, cap_eval = 80, 40           # same windows per class as Gate-0 v1
     geometry = jnu_data.GEOMETRY
     tasks = ((600, 800), (600, 1000), (1000, 800), (1000, 600))
-    _span = {"library": (0.0, 1.0), "A": (0.0, 0.5), "B": (0.5, 1.0)}
+    n_classes = 4
+    _span = {"library": (0.0, 1.0), "A": (0.0, 0.5), "B": (0.5, 1.0),
+             # D1 streams revisit the library speed: library = first half, revisit U/T = remaining quarters
+             "lib_half": (0.0, 0.5), "U_lib": (0.5, 0.75), "T_lib": (0.75, 1.0)}
 
     @staticmethod
     @lru_cache(maxsize=None)
@@ -38,6 +41,7 @@ class PU:
     """Paderborn vibration_1 (64 kHz), bearing 6203, M07_F10 so only speed differs; bearings as in G1."""
     name, fs, win, hop = "pu", 64000.0, 16000, 8000
     cap_fit, cap_eval = 80, 80
+    n_classes = 4
     geometry = {"N_balls": 8, "d_mm": 6.75, "D_mm": 29.05, "alpha_deg": 0.0}
     tasks = ((900, 1500), (1500, 900))
     condition = {900: "N09_M07_F10", 1500: "N15_M07_F10"}
