@@ -63,27 +63,32 @@ class PU:
 DATASETS = {"jnu": JNU, "pu": PU}
 
 
-def make_windows(entries, win, hop, cap, transform=None, rate=1.0):
+def make_windows(entries, win, hop, cap, transform=None, rate=1.0, synth=None):
     """Windows from entries, at most `cap` per class, evenly thinned across all of a class's recordings.
 
     transform: optional signal -> synthesised signal at speed ratio `rate` (= target/source rpm). Synthesised
     sample t corresponds to source sample t * rate; spans are stored in source coordinates so a library
     window and its transposed copy can be recognised as overlapping.
+    synth: optional per-entry alternative, (label, rec, signal) -> (synthesised signal, rate), for sources whose
+    speed differs between entries (Ottawa chunks). Overrides transform/rate.
     """
     candidates = {}
     for label, rec, sig, lo, hi in entries:
-        s = transform(sig) if transform else sig
+        if synth is not None:
+            s, r = synth(label, rec, sig)
+        else:
+            s, r = (transform(sig) if transform else sig), rate
         for st in jnu_data.window_starts(len(s), win, hop, lo, hi):
-            candidates.setdefault(label, []).append((s, rec, st))
+            candidates.setdefault(label, []).append((s, rec, st, r))
     W, y, recs, span_lo, span_hi = [], [], [], [], []
     for label in sorted(candidates):
         items = candidates[label]
         for i in np.linspace(0, len(items) - 1, min(cap, len(items))).round().astype(int):
-            s, rec, st = items[i]
+            s, rec, st, r = items[i]
             W.append(s[st:st + win])
             y.append(label)
             recs.append(rec)
-            span_lo.append(st * rate)
-            span_hi.append((st + win) * rate)
+            span_lo.append(st * r)
+            span_hi.append((st + win) * r)
     return {"W": np.stack(W), "y": np.array(y), "rec": np.array(recs),
             "span_lo": np.array(span_lo), "span_hi": np.array(span_hi)}
