@@ -1,5 +1,6 @@
 """Label-free fitness proxies, computed on real UNLABELLED windows from the new environment."""
 import numpy as np
+from sklearn.cluster import KMeans
 
 EPS = 1e-12
 
@@ -11,6 +12,22 @@ def _entropy(p):
 def information_maximization(p):
     """H(mean prediction) - mean H(prediction): confident AND class-diverse predictions score high."""
     return float(_entropy(p.mean(axis=0, keepdims=True))[0] - _entropy(p).mean())
+
+
+def weighted_information_maximization(p, w):
+    """IM with per-window weights: H(weighted mean prediction) - weighted mean H(prediction)."""
+    w = np.asarray(w, dtype=float) / np.sum(w)
+    pbar = (w[:, None] * p).sum(axis=0, keepdims=True)
+    return float(_entropy(pbar)[0] - (w * _entropy(p)).sum())
+
+
+def cluster_balance_weights(X, k, seed=0):
+    """Label-free buffer re-balancing: k-means (k = number of library classes) on standardised features of the
+    unlabelled windows; each window weighs 1 / (its cluster size), so every cluster carries equal mass.
+    Returns (weights, cluster labels). Model-independent: every candidate is scored on the same weights."""
+    Z = (X - X.mean(axis=0)) / (X.std(axis=0) + 1e-8)
+    labels = KMeans(n_clusters=k, n_init=10, random_state=seed).fit_predict(Z)
+    return 1.0 / np.bincount(labels, minlength=k)[labels], labels
 
 
 def neg_entropy(p):
