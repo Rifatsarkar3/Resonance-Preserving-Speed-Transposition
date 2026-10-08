@@ -38,11 +38,17 @@ def sample(rng):
                   keep_real=bool(rng.integers(2)))
 
 
-def training_set(recipe, ds, library_entries, library_windows, src, tgt):
-    """Windows (N, L) and labels for training a diagnoser under `recipe` (perceived target speed tgt)."""
+def training_set(recipe, ds, library_entries, library_windows, src, tgt, src_rpm_of=None):
+    """Windows (N, L) and labels for training a diagnoser under `recipe` (perceived target speed tgt).
+
+    src: nominal library speed, which defines the synthesised target speeds. src_rpm_of: optional rec -> measured
+    source speed of that entry (Ottawa chunks); without it every entry is transposed from src.
+    """
     parts = [library_windows] if recipe.keep_real else []
     for t in recipe.target_rpms(src, tgt):
-        parts.append(make_windows(library_entries, ds.win, ds.hop, recipe.copies,
-                                  transform=lambda y, t=t: synthesis.transpose(y, src, t, recipe.beta, recipe.n_fft),
-                                  rate=t / src))
+        def synth(label, rec, sig, t=t):
+            s0 = src_rpm_of(rec) if src_rpm_of else src
+            return synthesis.transpose(sig, s0, t, recipe.beta, recipe.n_fft), t / s0
+
+        parts.append(make_windows(library_entries, ds.win, ds.hop, recipe.copies, synth=synth))
     return np.concatenate([p["W"] for p in parts]), np.concatenate([p["y"] for p in parts])
