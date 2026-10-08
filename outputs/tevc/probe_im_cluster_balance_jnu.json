@@ -1,0 +1,50 @@
+{
+ "600->1000": {
+  "rho_plain_IM_balanced": 0.919794215164469,
+  "acc_range": [
+   0.49375,
+   0.99375
+  ],
+  "50% healthy": {
+   "rho_plain_IM": 0.8727007513480481,
+   "rho_cluster_balanced_IM": 0.9021341662333112,
+   "cluster_purity_ARI": 1.0
+  },
+  "70% healthy": {
+   "rho_plain_IM": 0.9080208492103637,
+   "rho_cluster_balanced_IM": 0.899190824744785,
+   "cluster_purity_ARI": 1.0
+  },
+  "90% healthy": {
+   "rho_plain_IM": 0.6975719327807333,
+   "rho_cluster_balanced_IM": 0.9374542640956268,
+   "cluster_purity_ARI": 0.35430908559742913
+  }
+ },
+ "1000->600": {
+  "rho_plain_IM_balanced": 0.9286242396300478,
+  "acc_range": [
+   0.6875,
+   1.0
+  ],
+  "50% healthy": {
+   "rho_plain_IM": 0.9477559593054689,
+   "rho_cluster_balanced_IM": 0.9256808981415217,
+   "cluster_purity_ARI": 0.9445306725794531
+  },
+  "70% healthy": {
+   "rho_plain_IM": 0.9271525688857849,
+   "rho_cluster_balanced_IM": 0.9227375566529953,
+   "cluster_purity_ARI": 1.0
+  },
+  "90% healthy": {
+   "rho_plain_IM": 0.4915380285838923,
+   "rho_cluster_balanced_IM": 0.7902871896693118,
+   "cluster_purity_ARI": 0.24648318042813455
+  }
+ },
+ "verdict": {
+  "criterion": "rho(cluster-balanced IM, acc) >= 0.5 at 70% healthy in both directions",
+  "passed": true
+ }
+}
