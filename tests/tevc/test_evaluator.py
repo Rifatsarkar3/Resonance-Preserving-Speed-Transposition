@@ -83,6 +83,21 @@ def test_fitness_uses_buffer_weights_computed_once_per_environment(tmp_path):
     assert calls == [env.name]
 
 
+def test_phase_vocoder_recipes_keep_their_pre_tsm_cache_keys(tmp_path):
+    import hashlib
+    import json
+    from dataclasses import asdict, replace
+
+    from tevc.evaluator import _fingerprint
+    ev = _evaluator(tmp_path)
+    env = ev.stream.environments[0]
+    legacy = {k: v for k, v in asdict(RECIPE).items() if k != "tsm"}
+    payload = json.dumps([ev.stream.dataset.name, env.name, _fingerprint(ev.stream.library, env.U, env.T), legacy,
+                          42, ev.model_name, ev.epochs], sort_keys=True)
+    assert ev._key(env, RECIPE, 42) == hashlib.sha1(payload.encode()).hexdigest()[:16]
+    assert ev._key(env, replace(RECIPE, tsm="wsola"), 42) != ev._key(env, RECIPE, 42)
+
+
 def test_true_accuracy_is_scored_on_the_test_set(tmp_path):
     ev = _evaluator(tmp_path)
     env = ev.stream.environments[0]

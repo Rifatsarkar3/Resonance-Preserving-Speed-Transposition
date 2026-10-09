@@ -59,8 +59,11 @@ class RecipeEvaluator:
         return self._weights[env.name]
 
     def _key(self, env, recipe, seed):
+        r = asdict(recipe)
+        if r.get("tsm") == "pv":
+            del r["tsm"]                # phase-vocoder recipes keep the keys they had before the tsm field
         payload = json.dumps([self.stream.dataset.name, env.name, _fingerprint(self.stream.library, env.U, env.T),
-                              asdict(recipe), seed, self.model_name, self.epochs], sort_keys=True)
+                              r, seed, self.model_name, self.epochs], sort_keys=True)
         return hashlib.sha1(payload.encode()).hexdigest()[:16]
 
     def probabilities(self, env, recipe, seed):

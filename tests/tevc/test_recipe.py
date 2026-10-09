@@ -34,6 +34,13 @@ def test_training_set_size_is_real_plus_targets_times_classes_times_copies():
     assert len(y) == 4 + 2 * 2 * 3 and W.shape == (16, 2000)
 
 
+def test_wsola_recipes_synthesise_with_wsola():
+    pv = Recipe(1, 1.0, 1.0, 256, 0.0, 3, False)
+    ws = Recipe(1, 1.0, 1.0, 256, 0.0, 3, False, tsm="wsola")
+    (W_pv, y_pv), (W_ws, y_ws) = (training_set(r, _DS, _entries(), _library(), 600, 1000) for r in (pv, ws))
+    assert W_pv.shape == W_ws.shape and np.array_equal(y_pv, y_ws) and not np.allclose(W_pv, W_ws)
+
+
 def test_training_set_uses_per_entry_source_speed():
     r = Recipe(2, 0.5, 1.0, 256, 0.0, 3, True)
     seen = []

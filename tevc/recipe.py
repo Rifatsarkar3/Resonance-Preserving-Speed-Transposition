@@ -19,6 +19,7 @@ class Recipe:
     beta: float         # resonance shift: 0 = RPST (bands fixed) ... 1 = plain resampling
     copies: int         # windows per class per synthesised speed
     keep_real: bool     # also train on the real library windows
+    tsm: str = "pv"     # time-scale part: "pv" phase vocoder (n_fft = STFT frame) | "wsola" (n_fft = segment length)
 
     def target_rpms(self, src, tgt):
         return [float(src * (tgt / src) ** q) for q in np.linspace(self.q_lo, self.q_hi, self.n_targets)]
@@ -45,10 +46,11 @@ def training_set(recipe, ds, library_entries, library_windows, src, tgt, src_rpm
     source speed of that entry (Ottawa chunks); without it every entry is transposed from src.
     """
     parts = [library_windows] if recipe.keep_real else []
+    operator = synthesis.transpose_wsola if recipe.tsm == "wsola" else synthesis.transpose
     for t in recipe.target_rpms(src, tgt):
         def synth(label, rec, sig, t=t):
             s0 = src_rpm_of(rec) if src_rpm_of else src
-            return synthesis.transpose(sig, s0, t, recipe.beta, recipe.n_fft), t / s0
+            return operator(sig, s0, t, recipe.beta, recipe.n_fft), t / s0
 
         parts.append(make_windows(library_entries, ds.win, ds.hop, recipe.copies, synth=synth))
     return np.concatenate([p["W"] for p in parts]), np.concatenate([p["y"] for p in parts])
