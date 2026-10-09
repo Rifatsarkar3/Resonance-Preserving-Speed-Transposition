@@ -12,7 +12,10 @@ import pandas as pd
 FS = 50000.0
 ROOT = Path("data/raw/JNU")
 FAULT_LABELS = {"n": 0, "ib": 1, "ob": 2, "tb": 3}
-GEOMETRY = {"N_balls": 8, "d_mm": 7.5, "D_mm": 38.5, "alpha_deg": 0.0}     # ER-16K bearing
+# Li et al., Sensors 13:8013 (2013), Table 1: N205 (normal, outer-race and roller faults; 10 rollers) and NU205
+# (inner-race fault; 11 rollers), roller diameter 7 mm, contact angle 0. Pitch diameter not reported: bore/OD mean
+# (25 + 52) / 2 = 38.5 mm.
+GEOMETRY = {"N_balls": 10, "N_balls_inner": 11, "d_mm": 7.0, "D_mm": 38.5, "alpha_deg": 0.0}
 
 
 def load_recordings(jnu_dir):

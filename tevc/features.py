@@ -25,11 +25,15 @@ TIME_NAMES = ["t_log_rms", "t_log_std", "t_log_mabs", "t_log_peak", "t_log_p2p",
 WPT_STATS = ("loge", "kurt", "crest")
 
 
-def compute_fault_frequencies(N_balls, d_mm, D_mm, alpha_deg, f_shaft_hz):
-    """Bearing defect frequencies in Hz: BPFO, BPFI, BSF, FTF and the shaft harmonics f_s, 2f_s, 3f_s."""
+def compute_fault_frequencies(N_balls, d_mm, D_mm, alpha_deg, f_shaft_hz, N_balls_inner=None):
+    """Bearing defect frequencies in Hz: BPFO, BPFI, BSF, FTF and the shaft harmonics f_s, 2f_s, 3f_s.
+
+    N_balls_inner: rolling-element count of the bearing that carries the inner-race fault, when it differs
+    (JNU: N205 with 10 rollers for outer-race / roller faults, NU205 with 11 rollers for the inner race).
+    """
     ratio = (d_mm / D_mm) * math.cos(math.radians(alpha_deg))
     return {"BPFO": float((N_balls / 2) * f_shaft_hz * (1 - ratio)),
-            "BPFI": float((N_balls / 2) * f_shaft_hz * (1 + ratio)),
+            "BPFI": float(((N_balls_inner or N_balls) / 2) * f_shaft_hz * (1 + ratio)),
             "BSF": float((D_mm / (2 * d_mm)) * f_shaft_hz * (1 - ratio ** 2)),
             "FTF": float((f_shaft_hz / 2) * (1 - ratio)),
             "f_s": float(f_shaft_hz), "2f_s": float(2 * f_shaft_hz), "3f_s": float(3 * f_shaft_hz)}

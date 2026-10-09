@@ -40,7 +40,9 @@ class PU:
     root = Path("data/raw/PU")
     cap_fit, cap_eval = 80, 80
     n_classes = 4
-    geometry = {"N_balls": 8, "d_mm": 6.75, "D_mm": 29.05, "alpha_deg": 0.0}
+    # 6203 deep-groove ball bearing: 8 balls of 6.747 mm; pitch diameter = bore/OD mean (17 + 40) / 2 = 28.5 mm,
+    # which equals the catalogue pitch circle
+    geometry = {"N_balls": 8, "d_mm": 6.747, "D_mm": 28.5, "alpha_deg": 0.0}
     tasks = ((900, 1500), (1500, 900))
     condition = {900: "N09_M07_F10", 1500: "N15_M07_F10"}
     class_bearings = {0: ("K001", "K002", "K003", "K004"), 1: ("KA01", "KA03", "KA04", "KA05"),
