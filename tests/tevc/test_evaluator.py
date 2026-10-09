@@ -37,8 +37,13 @@ def _fake_predict(model, W):
     return p
 
 
-def _evaluator(tmp_path):
-    return RecipeEvaluator(_stream(), epochs=1, cache_dir=tmp_path, train_fn=_fake_train, predict_fn=_fake_predict)
+def _uniform_weights(env):
+    return np.ones(len(env.U["W"]))
+
+
+def _evaluator(tmp_path, weights_fn=_uniform_weights):
+    return RecipeEvaluator(_stream(), epochs=1, cache_dir=tmp_path, train_fn=_fake_train, predict_fn=_fake_predict,
+                           weights_fn=weights_fn)
 
 
 RECIPE = Recipe(1, 1.0, 1.0, 256, 0.0, 2, True)
@@ -62,3 +67,23 @@ def test_different_seed_is_a_different_cache_entry(tmp_path):
     env = ev.stream.environments[0]
     ev.evaluate(env, RECIPE, seed=1)
     assert not ev.evaluate(env, RECIPE, seed=2).cached
+
+
+def test_fitness_uses_buffer_weights_computed_once_per_environment(tmp_path):
+    calls = []
+
+    def first_class_only(env):                 # all mass on the first half of U -> one predicted class -> IM = 0
+        calls.append(env.name)
+        return np.r_[np.ones(len(env.U["W"]) // 2), np.zeros(len(env.U["W"]) // 2)]
+
+    ev = _evaluator(tmp_path, weights_fn=first_class_only)
+    env = ev.stream.environments[0]
+    assert np.isclose(ev.evaluate(env, RECIPE, seed=1).fitness, 0.0, atol=1e-9)
+    ev.evaluate(env, RECIPE, seed=2)
+    assert calls == [env.name]
+
+
+def test_true_accuracy_is_scored_on_the_test_set(tmp_path):
+    ev = _evaluator(tmp_path)
+    env = ev.stream.environments[0]
+    assert ev.true_accuracy(env, RECIPE, seed=3) == 1.0

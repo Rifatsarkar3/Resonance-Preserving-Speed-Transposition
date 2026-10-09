@@ -1,8 +1,9 @@
 """Recipe evaluation: the expensive, noisy fitness of D1 (spec §2).
 
-The agent receives only `Evaluation` (fitness = IM on the environment's UNLABELLED buffer, plus cost). True accuracy
-on the environment's test set is computed for scoring and appended to `hidden_log`, which agent code never reads.
-Predicted probabilities are cached on disk, so re-scoring (e.g. imbalance stress tests) never retrains.
+The agent receives only `Evaluation` (fitness = cluster-balanced IM on the environment's UNLABELLED buffer, plus
+cost). True accuracy on the environment's test set is for scoring only: `true_accuracy` (stream driver) and
+`hidden_log`, neither of which agent code reads. Predicted probabilities are cached on disk, so re-scoring never
+retrains.
 """
 import hashlib
 import json
@@ -12,14 +13,21 @@ from pathlib import Path
 
 import numpy as np
 
+from tevc import features
 from tevc.deep_train import predict, train_cnn
-from tevc.proxies import information_maximization
+from tevc.proxies import cluster_balance_weights, information_maximization, weighted_information_maximization
 from tevc.recipe import training_set
+
+
+def cluster_weights(env, ds):
+    """Frozen D1 buffer weights (spec §4): k-means on the standardised physics features of U, 1 / cluster size."""
+    X = features.extract(env.U["W"], ds.fs, env.rpm / 60.0, ds.geometry, znorm=True)
+    return cluster_balance_weights(X, ds.n_classes)[0]
 
 
 @dataclass(frozen=True)
 class Evaluation:
-    fitness: float      # IM on U_t (agent-visible)
+    fitness: float      # cluster-balanced IM on U_t (agent-visible)
     seed: int
     cost_s: float
     cached: bool
@@ -35,12 +43,20 @@ def _fingerprint(*window_sets):
 
 class RecipeEvaluator:
     def __init__(self, stream, model_name="TICNN", epochs=40, cache_dir=Path("outputs/tevc/cache/evals"),
-                 train_fn=train_cnn, predict_fn=predict):
+                 train_fn=train_cnn, predict_fn=predict, weights_fn=None):
         self.stream, self.model_name, self.epochs = stream, model_name, epochs
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.train_fn, self.predict_fn = train_fn, predict_fn
+        self.weights_fn = weights_fn or (lambda env: cluster_weights(env, stream.dataset))
+        self._weights = {}
         self.hidden_log = []
+
+    def weights(self, env):
+        """Label-free window weights of env's buffer, computed once per environment."""
+        if env.name not in self._weights:
+            self._weights[env.name] = self.weights_fn(env)
+        return self._weights[env.name]
 
     def _key(self, env, recipe, seed):
         payload = json.dumps([self.stream.dataset.name, env.name, _fingerprint(self.stream.library, env.U, env.T),
@@ -64,8 +80,14 @@ class RecipeEvaluator:
 
     def evaluate(self, env, recipe, seed):
         pU, pT, cost, cached = self.probabilities(env, recipe, seed)
-        fitness = information_maximization(pU)
+        fitness = weighted_information_maximization(pU, self.weights(env))
         self.hidden_log.append({"env": env.name, "recipe": asdict(recipe), "seed": seed, "fitness": fitness,
+                                "plain_im": information_maximization(pU),
                                 "true_acc": float((pT.argmax(axis=1) == env.T["y"]).mean()),
                                 "cost_s": cost, "cached": cached})
         return Evaluation(fitness, seed, cost, cached)
+
+    def true_accuracy(self, env, recipe, seed):
+        """Scoring only (stream driver, never the agent): accuracy of that trained model on env's test set."""
+        _, pT, _, _ = self.probabilities(env, recipe, seed)
+        return float((pT.argmax(axis=1) == env.T["y"]).mean())

@@ -1,0 +1,151 @@
+"""D1 experiment driver (spec §5): run each method over an environment stream and score its deployed models.
+
+    python -m tevc.run_stream --dataset jnu             # development stream, all methods, 5 independent runs
+    python -m tevc.run_stream --dataset pu --runs 1     # first run only
+Writes outputs/tevc/stream_<dataset>.json after every (run, method), so partial results are readable early.
+Methods see only the agent-visible fitness; true accuracy (evaluator.true_accuracy) is used here, for scoring only.
+Ottawa is the confirmatory set (protocol frozen first, run once): it requires --confirmatory.
+"""
+import argparse
+import json
+import time
+from dataclasses import asdict
+from pathlib import Path
+
+import numpy as np
+from scipy.stats import wilcoxon
+
+from tevc.agent import Agent
+from tevc.evaluator import RecipeEvaluator
+from tevc.optimizers import B, N_GENES, N_INIT, Trial, ga_search, random_search
+from tevc.recipe import ANCHORS
+from tevc.stream import assert_disjoint, jnu_stream, ottawa_stream, pu_stream
+
+STREAMS = {"jnu": jnu_stream, "pu": pu_stream, "ottawa": ottawa_stream}
+METHODS = ("STATIC-NONE", "STATIC-H2", "RANDOM", "GA-RESTART", "AGENT", "AGENT-B1")
+RUN_SEEDS = (42, 1337, 2025, 999, 7)
+REEVAL_SEED_OFFSET = 10_000
+OUT_DIR = Path("outputs/tevc")
+
+
+def _rng(run_seed, env_index, purpose):
+    return np.random.default_rng([run_seed, env_index, purpose])
+
+
+def run_method(method, stream, evaluator, run_seed):
+    """[(carried, trials)] per environment for one method and one independent run."""
+    seeds = (run_seed, run_seed + REEVAL_SEED_OFFSET)
+    agent = (Agent(stream.library_rpm, seeds, run_seed=run_seed, beta=1.0 if method == "AGENT-B1" else None)
+             if method.startswith("AGENT") else None)
+    out = []
+    for i, env in enumerate(stream.environments):
+        init_rng, op_rng = _rng(run_seed, i, 0), _rng(run_seed, i, 1)   # shared starts across methods
+        if method in ("STATIC-NONE", "STATIC-H2"):
+            recipe = ANCHORS["NONE" if method == "STATIC-NONE" else "H2_LIKE"]
+            out.append(([], [Trial(recipe, run_seed, evaluator.evaluate(env, recipe, run_seed).fitness)]))
+        elif method == "RANDOM":
+            out.append(([], random_search(evaluator, env, init_rng, run_seed)))
+        elif method == "GA-RESTART":
+            out.append(([], ga_search(evaluator, env, init_rng.random((N_INIT, N_GENES)), op_rng, seeds)))
+        else:
+            out.append(agent.handle(evaluator, env, init_rng, op_rng))
+    return out
+
+
+def score(evaluator, stream, env, carried, trials, budget=B):
+    """Recovery curve a_k, k = 1..budget: true accuracy of the deployed model (highest fitness so far)."""
+    pool, curve = list(carried), []
+    for k in range(budget):
+        if k < len(trials):
+            pool.append(trials[k])
+        best = max(pool, key=lambda t: t.fitness)
+        curve.append(evaluator.true_accuracy(env, best.recipe, best.seed))
+    return {"env": env.name, "rpm": env.rpm, "d": float(np.log(env.rpm / stream.library_rpm)),
+            "n_evals": len(trials), "n_carried": len(carried),
+            "deployed": {**asdict(best.recipe), "seed": best.seed, "fitness": best.fitness},
+            "deployed_acc": curve[-1], "auc": float(np.mean(curve)), "curve": curve,
+            "trials": [{**asdict(t.recipe), "seed": t.seed, "fitness": t.fitness,
+                        "acc": evaluator.true_accuracy(env, t.recipe, t.seed)} for t in trials]}
+
+
+def summarize(results):
+    out = {}
+    for m, runs in results.items():
+        acc = [np.mean([e["deployed_acc"] for e in envs]) for envs in runs.values()]
+        auc = [np.mean([e["auc"] for e in envs]) for envs in runs.values()]
+        out[m] = {"runs": len(acc), "acc_mean": float(np.mean(acc)), "acc_std": float(np.std(acc)),
+                  "auc_mean": float(np.mean(auc)), "auc_std": float(np.std(auc)),
+                  "evals_per_stream": float(np.mean([sum(e["n_evals"] for e in envs) for envs in runs.values()]))}
+    return out
+
+
+def paired_tests(results, key, ref="AGENT"):
+    """One-sided Wilcoxon signed-rank (ref > other) on (run, environment) pairs; Holm across the other methods."""
+    if ref not in results:
+        return {}
+    tests = {}
+    for m in results:
+        if m == ref:
+            continue
+        common = sorted(set(results[ref]) & set(results[m]))
+        a = np.array([e[key] for r in common for e in results[ref][r]])
+        b = np.array([e[key] for r in common for e in results[m][r]])
+        diff = a - b
+        p = float(wilcoxon(a, b, alternative="greater").pvalue) if np.count_nonzero(diff) >= 5 else None
+        tests[m] = {"pairs": len(diff), "mean_diff": float(diff.mean()) if len(diff) else None,
+                    "wins": int((diff > 0).sum()), "ties": int((diff == 0).sum()), "losses": int((diff < 0).sum()),
+                    "p": p, "p_holm": None}
+    ranked = sorted((v["p"], m) for m, v in tests.items() if v["p"] is not None)
+    running = 0.0
+    for i, (p, m) in enumerate(ranked):
+        running = max(running, min(1.0, (len(ranked) - i) * p))
+        tests[m]["p_holm"] = running
+    return tests
+
+
+def report(dataset, methods, results, elapsed):
+    done = {m: r for m, r in results.items() if r}
+    summary = summarize(done)
+    gate = None
+    if "AGENT" in summary and "GA-RESTART" in summary:
+        a, g = summary["AGENT"], summary["GA-RESTART"]
+        gate = {"agent_acc_gt_ga_restart": a["acc_mean"] > g["acc_mean"],
+                "agent_auc_gt_ga_restart": a["auc_mean"] > g["auc_mean"]}
+    return {"dataset": dataset, "budget_per_change": B, "run_seeds": list(RUN_SEEDS), "methods": list(methods),
+            "fitness": "cluster-balanced IM on the unlabelled buffer", "elapsed_s": round(elapsed),
+            "summary": summary, "dev_gate": gate,
+            "tests_deployed_acc": paired_tests(done, "deployed_acc"), "tests_auc": paired_tests(done, "auc"),
+            "results": done}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dataset", choices=sorted(STREAMS), required=True)
+    ap.add_argument("--runs", type=int, default=len(RUN_SEEDS))
+    ap.add_argument("--methods", default=",".join(METHODS))
+    ap.add_argument("--confirmatory", action="store_true", help="required for Ottawa: frozen protocol, run once")
+    args = ap.parse_args()
+    if args.dataset == "ottawa" and not args.confirmatory:
+        raise SystemExit("Ottawa is the confirmatory set: freeze and pre-register the protocol, then pass --confirmatory")
+    methods = args.methods.split(",")
+    stream = STREAMS[args.dataset]()
+    assert_disjoint(stream)
+    evaluator = RecipeEvaluator(stream)
+    out_path = OUT_DIR / f"stream_{args.dataset}.json"
+    results, t0 = {m: {} for m in methods}, time.time()
+    for run_seed in RUN_SEEDS[:args.runs]:
+        for m in methods:
+            t = time.time()
+            envs = [score(evaluator, stream, env, carried, trials) for env, (carried, trials)
+                    in zip(stream.environments, run_method(m, stream, evaluator, run_seed))]
+            results[m][str(run_seed)] = envs
+            print(f"run {run_seed:4d} {m:11s} deployed acc {[round(e['deployed_acc'] * 100, 1) for e in envs]} "
+                  f"mean {np.mean([e['deployed_acc'] for e in envs]) * 100:5.1f}  auc "
+                  f"{np.mean([e['auc'] for e in envs]) * 100:5.1f}  evals {sum(e['n_evals'] for e in envs):3d}  "
+                  f"{time.time() - t:5.0f}s", flush=True)
+            out_path.write_text(json.dumps(report(args.dataset, methods, results, time.time() - t0), indent=1))
+    print("summary:", json.dumps(report(args.dataset, methods, results, time.time() - t0)["summary"], indent=1))
+
+
+if __name__ == "__main__":
+    main()
