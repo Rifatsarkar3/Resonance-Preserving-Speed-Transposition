@@ -7,13 +7,13 @@ Methods see only the agent-visible fitness; true accuracy (evaluator.true_accura
 Ottawa is the confirmatory set (protocol frozen first, run once): it requires --confirmatory.
 """
 import argparse
+import itertools
 import json
 import time
 from dataclasses import asdict
 from pathlib import Path
 
 import numpy as np
-from scipy.stats import wilcoxon
 
 from tevc.agent import Agent
 from tevc.evaluator import Evaluation, RecipeEvaluator
@@ -26,7 +26,7 @@ METHODS = ("STATIC-NONE", "STATIC-H2", "RANDOM", "GA-RESTART", "AGENT", "AGENT-B
 EXTRA = ("BO", "WARM-TRANSFER", "ORACLE-FITNESS", "AGENT-NOMEM", "AGENT-NOSURR", "AGENT-NOREEVAL")
 AGENT_VARIANTS = {"AGENT": {}, "AGENT-B1": {"beta": 1.0}, "AGENT-NOMEM": {"memory": False},
                   "AGENT-NOSURR": {"surrogate": False}, "AGENT-NOREEVAL": {"reeval": False}}
-RUN_SEEDS = (42, 1337, 2025, 999, 7)
+RUN_SEEDS = (42, 1337, 2025, 999, 7, 3, 11, 101, 2718, 31415)   # 10 runs: exact run-level p can reach 1/1024
 REEVAL_SEED_OFFSET = 10_000
 OUT_DIR = Path("outputs/tevc")
 
@@ -114,23 +114,27 @@ def summarize(results):
     return out
 
 
-def paired_tests(results, key, ref="AGENT"):
-    """One-sided Wilcoxon signed-rank (ref > other) on (run, environment) pairs; Holm across the other methods."""
+def run_level_tests(results, key, ref="AGENT", n_boot=10_000):
+    """Dependence-aware comparison of ref against every other method. Environments within one stream run share
+    the agent's memory and the same data, so the unit is the independent run: per run, the stream-mean difference
+    ref - other; exact one-sided sign-flip permutation test over runs (smallest p = 2^-runs); Holm across the
+    other methods; percentile bootstrap 95% CI of the mean difference over runs."""
     if ref not in results:
         return {}
-    tests = {}
+    tests, rng = {}, np.random.default_rng(0)
     for m in results:
-        if m == ref:
-            continue
         common = sorted(set(results[ref]) & set(results[m]))
-        a = np.array([e[key] for r in common for e in results[ref][r]])
-        b = np.array([e[key] for r in common for e in results[m][r]])
-        diff = a - b
-        p = float(wilcoxon(a, b, alternative="greater").pvalue) if np.count_nonzero(diff) >= 5 else None
-        tests[m] = {"pairs": len(diff), "mean_diff": float(diff.mean()) if len(diff) else None,
+        if m == ref or not common:
+            continue
+        diff = np.array([np.mean([e[key] for e in results[ref][r]]) - np.mean([e[key] for e in results[m][r]])
+                         for r in common])
+        null = (np.array(list(itertools.product((1.0, -1.0), repeat=len(diff)))) * np.abs(diff)).mean(axis=1)
+        boot = diff[rng.integers(len(diff), size=(n_boot, len(diff)))].mean(axis=1)
+        tests[m] = {"runs": len(diff), "mean_diff": float(diff.mean()),
+                    "ci95": [float(np.percentile(boot, 2.5)), float(np.percentile(boot, 97.5))],
                     "wins": int((diff > 0).sum()), "ties": int((diff == 0).sum()), "losses": int((diff < 0).sum()),
-                    "p": p, "p_holm": None}
-    ranked = sorted((v["p"], m) for m, v in tests.items() if v["p"] is not None)
+                    "p": float(np.mean(null >= diff.mean() - 1e-12)), "p_holm": None}
+    ranked = sorted((v["p"], m) for m, v in tests.items())
     running = 0.0
     for i, (p, m) in enumerate(ranked):
         running = max(running, min(1.0, (len(ranked) - i) * p))
@@ -149,7 +153,7 @@ def report(dataset, methods, results, elapsed):
     return {"dataset": dataset, "budget_per_change": B, "run_seeds": list(RUN_SEEDS), "methods": list(methods),
             "fitness": "cluster-balanced IM on the unlabelled buffer", "elapsed_s": round(elapsed),
             "summary": summary, "dev_gate": gate,
-            "tests_deployed_acc": paired_tests(done, "deployed_acc"), "tests_auc": paired_tests(done, "auc"),
+            "tests_deployed_acc": run_level_tests(done, "deployed_acc"), "tests_auc": run_level_tests(done, "auc"),
             "results": done}
 
 

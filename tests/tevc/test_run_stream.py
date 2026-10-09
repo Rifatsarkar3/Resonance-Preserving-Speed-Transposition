@@ -2,7 +2,7 @@ import numpy as np
 
 from tevc.optimizers import Trial
 from tevc.recipe import Recipe
-from tevc.run_stream import OracleEvaluator, run_method, score
+from tevc.run_stream import OracleEvaluator, run_level_tests, run_method, score
 from tevc.stream import Environment, Stream
 
 E800, E1000 = Environment("fake@800", 800.0, {}, {}), Environment("fake@1000", 1000.0, {}, {})
@@ -33,6 +33,21 @@ def test_searches_share_their_first_change_start(fake_evaluator):
     first = {m: [t.recipe for t in run_method(m, STREAM, fake_evaluator, 42)[0][1][:12]]
              for m in ("RANDOM", "GA-RESTART", "AGENT", "BO", "ORACLE-FITNESS", "WARM-TRANSFER")}
     assert all(v == first["GA-RESTART"] for v in first.values())
+
+
+def _results(diffs):
+    """AGENT leads OTHER by diffs[r] in run r; two environments per run so pooling would double-count."""
+    return {"AGENT": {str(r): [{"deployed_acc": 0.5 + d}] * 2 for r, d in enumerate(diffs)},
+            "OTHER": {str(r): [{"deployed_acc": 0.5}] * 2 for r in range(len(diffs))}}
+
+
+def test_run_level_test_counts_runs_not_environments():
+    t = run_level_tests(_results([0.1] * 5), "deployed_acc")["OTHER"]
+    assert t["runs"] == 5 and np.isclose(t["p"], 1 / 32) and t["wins"] == 5
+
+
+def test_run_level_test_gives_no_credit_for_mixed_signs():
+    assert run_level_tests(_results([0.1, -0.1, 0.1, -0.1]), "deployed_acc")["OTHER"]["p"] > 0.4
 
 
 def test_every_search_spends_the_budget_per_change(fake_evaluator):
