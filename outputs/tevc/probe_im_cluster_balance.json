@@ -7,8 +7,8 @@
   ],
   "50% healthy": {
    "rho_plain_IM": 0.7176470588235294,
-   "rho_cluster_balanced_IM": 0.8147058823529412,
-   "cluster_purity_ARI": 0.32086863653656467
+   "rho_cluster_balanced_IM": 0.7764705882352941,
+   "cluster_purity_ARI": 0.21420007156561535
   },
   "70% healthy": {
    "rho_plain_IM": 0.33529411764705885,
@@ -34,8 +34,8 @@
   },
   "70% healthy": {
    "rho_plain_IM": 0.7911764705882354,
-   "rho_cluster_balanced_IM": 0.8117647058823528,
-   "cluster_purity_ARI": 0.19210232586201695
+   "rho_cluster_balanced_IM": 0.7764705882352941,
+   "cluster_purity_ARI": 0.19276425036581557
   },
   "90% healthy": {
    "rho_plain_IM": 0.5029411764705883,
