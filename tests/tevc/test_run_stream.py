@@ -2,7 +2,7 @@ import numpy as np
 
 from tevc.optimizers import Trial
 from tevc.recipe import Recipe
-from tevc.run_stream import OracleEvaluator, report, run_level_tests, run_method, score
+from tevc.run_stream import DFIDEvaluator, OracleEvaluator, report, run_level_tests, run_method, score
 from tevc.stream import Environment, Stream
 
 E800, E1000 = Environment("fake@800", 800.0, {}, {}), Environment("fake@1000", 1000.0, {}, {})
@@ -29,9 +29,19 @@ def test_oracle_fitness_is_true_accuracy(fake_evaluator):
     assert OracleEvaluator(fake_evaluator).evaluate(E800, Recipe(1, 1.0, 1.0, 256, 0.25, 20, True), 3).fitness == 0.75
 
 
+def test_dfid_evaluator_reports_dfid_as_fitness(fake_evaluator):
+    r = Recipe(1, 0.8, 1.0, 256, 0.25, 20, True)
+    assert np.isclose(DFIDEvaluator(fake_evaluator).evaluate(E800, r, 3).fitness, -0.3)
+
+
+def test_agent_dfid_searches_and_deploys_on_dfid(fake_evaluator):
+    trials = [t for _, ts in run_method("AGENT-DFID", STREAM, fake_evaluator, 42) for t in ts]
+    assert trials and all(t.fitness == fake_evaluator.dfid(None, t.recipe, t.seed)[0] for t in trials)
+
+
 def test_searches_share_their_first_change_start(fake_evaluator):
     first = {m: [t.recipe for t in run_method(m, STREAM, fake_evaluator, 42)[0][1][:12]]
-             for m in ("RANDOM", "GA-RESTART", "AGENT", "BO", "ORACLE-FITNESS", "WARM-TRANSFER")}
+             for m in ("RANDOM", "GA-RESTART", "AGENT", "BO", "ORACLE-FITNESS", "WARM-TRANSFER", "AGENT-DFID")}
     assert all(v == first["GA-RESTART"] for v in first.values())
 
 

@@ -15,7 +15,7 @@ import numpy as np
 
 from tevc import features
 from tevc.deep_train import predict, train_cnn
-from tevc.proxies import cluster_balance_weights, information_maximization, weighted_information_maximization
+from tevc.proxies import cluster_balance_weights, information_maximization, neg_mmd2, weighted_information_maximization
 from tevc.recipe import training_set
 
 
@@ -73,13 +73,40 @@ class RecipeEvaluator:
             z = np.load(path)
             return z["pU"], z["pT"], float(z["cost_s"]), True
         t0 = time.time()
-        W, y = training_set(recipe, self.stream.dataset, self.stream.library_entries, self.stream.library,
-                            self.stream.library_rpm, env.rpm, self.stream.src_rpm_of)
-        model = self.train_fn(W, y, self.model_name, self.epochs, seed)
+        model, _ = self._train(env, recipe, seed)
         pU, pT = self.predict_fn(model, env.U["W"]), self.predict_fn(model, env.T["W"])
         cost = time.time() - t0
         np.savez(path, pU=pU, pT=pT, cost_s=cost)
         return pU, pT, cost, False
+
+    def _train(self, env, recipe, seed):
+        W, y = training_set(recipe, self.stream.dataset, self.stream.library_entries, self.stream.library,
+                            self.stream.library_rpm, env.rpm, self.stream.src_rpm_of)
+        return self.train_fn(W, y, self.model_name, self.epochs, seed), W
+
+    def dfid(self, env, recipe, seed):
+        """(DFID, cached?): the secondary label-free fitness (spec §8; Gate-1 Spearman ρ 0.84 / 0.65 / 0.88), -MMD²
+        between the model's embeddings of 400 of its training windows and of U. Embeddings are not in the model
+        cache, so a cached model is retrained (seeded training is deterministic; the largest |ΔpU| against the cache
+        is stored as pU_drift). The value is kept beside the model cache, which is never rewritten."""
+        key = self._key(env, recipe, seed)
+        side = self.cache_dir / f"{key}.dfid.json"
+        if side.exists():
+            return json.loads(side.read_text())["dfid"], True
+        t0 = time.time()
+        model, W = self._train(env, recipe, seed)
+        pU, eU = self.predict_fn(model, env.U["W"], return_embedding=True)
+        _, eW = self.predict_fn(model, W[np.random.default_rng(0).permutation(len(W))[:400]], return_embedding=True)
+        value = neg_mmd2(eW, eU)
+        path = self.cache_dir / f"{key}.npz"
+        if path.exists():
+            with np.load(path) as z:
+                drift = float(np.abs(z["pU"] - pU).max())
+        else:
+            np.savez(path, pU=pU, pT=self.predict_fn(model, env.T["W"]), cost_s=time.time() - t0)
+            drift = 0.0
+        side.write_text(json.dumps({"dfid": value, "pU_drift": drift}))
+        return value, False
 
     def evaluate(self, env, recipe, seed):
         pU, pT, cost, cached = self.probabilities(env, recipe, seed)

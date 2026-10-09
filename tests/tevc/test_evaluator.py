@@ -30,11 +30,11 @@ def _fake_train(W, y, model_name, epochs, seed):
     return {"seed": seed}
 
 
-def _fake_predict(model, W):
+def _fake_predict(model, W, return_embedding=False):
     p = np.zeros((len(W), 2))
     p[: len(W) // 2, 0] = 1.0
     p[len(W) // 2:, 1] = 1.0          # perfect and confident on the balanced fake sets
-    return p
+    return (p, W[:, :4].astype(np.float64)) if return_embedding else p
 
 
 def _uniform_weights(env):
@@ -102,3 +102,22 @@ def test_true_accuracy_is_scored_on_the_test_set(tmp_path):
     ev = _evaluator(tmp_path)
     env = ev.stream.environments[0]
     assert ev.true_accuracy(env, RECIPE, seed=3) == 1.0
+
+
+def test_dfid_trains_once_and_shares_the_model_cache(tmp_path):
+    trains = []
+    ev = RecipeEvaluator(_stream(), epochs=1, cache_dir=tmp_path, train_fn=lambda *a: trains.append(a) or {},
+                         predict_fn=_fake_predict, weights_fn=_uniform_weights)
+    env = ev.stream.environments[0]
+    value, cached = ev.dfid(env, RECIPE, 42)
+    assert not cached and value <= 0.0
+    assert ev.evaluate(env, RECIPE, 42).cached and ev.dfid(env, RECIPE, 42) == (value, True) and len(trains) == 1
+
+
+def test_dfid_of_a_cached_model_records_retraining_drift(tmp_path):
+    import json
+    ev = _evaluator(tmp_path)
+    env = ev.stream.environments[0]
+    ev.evaluate(env, RECIPE, 7)                                  # probabilities cached, no embeddings
+    ev.dfid(env, RECIPE, 7)
+    assert json.loads(next(tmp_path.glob("*.dfid.json")).read_text())["pU_drift"] == 0.0

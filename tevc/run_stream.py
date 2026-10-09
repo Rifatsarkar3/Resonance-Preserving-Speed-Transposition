@@ -23,9 +23,9 @@ from tevc.stream import assert_disjoint, jnu_stream, ottawa_stream, pu_stream
 
 STREAMS = {"jnu": jnu_stream, "pu": pu_stream, "ottawa": ottawa_stream}
 METHODS = ("STATIC-NONE", "STATIC-H2", "RANDOM", "GA-RESTART", "AGENT", "AGENT-B1")
-EXTRA = ("BO", "WARM-TRANSFER", "ORACLE-FITNESS", "AGENT-NOMEM", "AGENT-NOSURR", "AGENT-NOREEVAL")
+EXTRA = ("BO", "WARM-TRANSFER", "ORACLE-FITNESS", "AGENT-NOMEM", "AGENT-NOSURR", "AGENT-NOREEVAL", "AGENT-DFID")
 AGENT_VARIANTS = {"AGENT": {}, "AGENT-B1": {"beta": 1.0}, "AGENT-NOMEM": {"memory": False},
-                  "AGENT-NOSURR": {"surrogate": False}, "AGENT-NOREEVAL": {"reeval": False}}
+                  "AGENT-NOSURR": {"surrogate": False}, "AGENT-NOREEVAL": {"reeval": False}, "AGENT-DFID": {}}
 RUN_SEEDS = (42, 1337, 2025, 999, 7, 3, 11, 101, 2718, 31415)   # 10 runs: exact run-level p can reach 1/1024
 REEVAL_SEED_OFFSET = 10_000
 OUT_DIR = Path("outputs/tevc")
@@ -40,6 +40,18 @@ class OracleEvaluator:
     def evaluate(self, env, recipe, seed):
         e = self.evaluator.evaluate(env, recipe, seed)
         return Evaluation(self.evaluator.true_accuracy(env, recipe, seed), seed, e.cost_s, e.cached)
+
+
+class DFIDEvaluator:
+    """AGENT-DFID ablation (spec §5, IM vs DFID fitness): fitness = DFID, the secondary label-free fitness."""
+
+    def __init__(self, evaluator):
+        self.evaluator = evaluator
+
+    def evaluate(self, env, recipe, seed):
+        value, cached = self.evaluator.dfid(env, recipe, seed)        # trains and caches the model when needed
+        e = self.evaluator.evaluate(env, recipe, seed)                # hidden log; model-cache hit
+        return Evaluation(value, seed, e.cost_s, cached)
 
 
 def _rng(run_seed, env_index, purpose):
@@ -83,7 +95,8 @@ def run_method(method, stream, evaluator, run_seed):
             previous = trials
             out.append(([], trials))
         else:
-            out.append(agent.handle(evaluator, env, init_rng, op_rng))
+            fitness = DFIDEvaluator(evaluator) if method == "AGENT-DFID" else evaluator
+            out.append(agent.handle(fitness, env, init_rng, op_rng))
     return out
 
 

@@ -17,6 +17,9 @@ class FakeEvaluator:
     def true_accuracy(self, env, recipe, seed):     # scoring side (driver / oracle), never the agent
         return 1.0 - recipe.beta
 
+    def dfid(self, env, recipe, seed):              # secondary fitness, deliberately unlike evaluate()
+        return -abs(recipe.q_lo - 0.5), False
+
 
 @pytest.fixture
 def fake_evaluator():
