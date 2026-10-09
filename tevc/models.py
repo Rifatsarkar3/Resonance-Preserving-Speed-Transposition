@@ -1,5 +1,9 @@
-"""1D-CNN classifiers trained inside each recipe evaluation: TICNN (D1 default) and WDCNN (Gate-0).
+"""1D-CNN classifiers trained inside each recipe evaluation: "TICNN" (D1 default) and "WDCNN" (Gate-0).
 
+The names are registry keys kept for cache compatibility (the key is part of every cached evaluation), not claims
+of correspondence to published models: "TICNN" here is a 1-D Inception CNN, NOT the TICNN of Zhang et al. (2018,
+training interference); "WDCNN" is WDCNN-style (wide first kernel) with 4 convolution blocks and global pooling,
+whereas the original has 5 blocks. Papers must name and specify them by their architecture as written below.
 Layers and construction order match the earlier RPST baseline implementations, so seeded runs reproduce the
 cached evaluations exactly. Input (N, L) or (N, 1, L); output logits (N, n_classes).
 """
