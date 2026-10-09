@@ -64,6 +64,8 @@ class OTTAWA:
     name, fs, win, hop = "ottawa", FS, WIN, HOP
     cap_fit, cap_eval = 80, 80
     n_classes = 5
+    # ER16K bearing (Huang & Baddour 2018): BPFO = 3.57 f_r, BPFI = 5.43 f_r
+    geometry = {"N_balls": 9, "d_mm": 7.94, "D_mm": 38.52, "alpha_deg": 0.0}
 
     @staticmethod
     def entries(trial, bin_hz):

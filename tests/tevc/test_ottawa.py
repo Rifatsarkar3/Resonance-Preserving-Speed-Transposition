@@ -8,6 +8,12 @@ from tevc.ottawa_data import OTTAWA, in_bin_chunks, pulse_edges, recording, spee
 FS = 200000.0
 
 
+def test_geometry_reproduces_the_published_defect_frequencies():
+    from tevc.features import compute_fault_frequencies
+    f = compute_fault_frequencies(f_shaft_hz=1.0, **OTTAWA.geometry)
+    assert round(f["BPFO"], 2) == 3.57 and round(f["BPFI"], 2) == 5.43
+
+
 def _encoder(speed_of_t, seconds):
     """Synthetic 0/5 V encoder: 1024 cycles per revolution, shaft speed speed_of_t(t) in Hz."""
     t = np.arange(int(seconds * FS)) / FS
