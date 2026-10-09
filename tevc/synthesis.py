@@ -1,7 +1,7 @@
 """Environment-synthesis operators: RPST and the resampling control.
 
-Parameters are identical to the RPST used in all WaPIGT/RPST experiments
-(scripts/h2_extrapolation.py: librosa phase vocoder, n_fft 256, hop 64).
+Parameters are identical to the RPST used in all earlier RPST experiments
+(librosa phase vocoder, n_fft 256, hop 64).
 """
 from math import gcd
 

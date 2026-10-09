@@ -8,11 +8,11 @@ Blocks, in order:
 Fixed-frequency blocks (FFT/WPT) see the resonance bands; order blocks use the environment's shaft
 speed, so they follow the fault frequencies.
 """
+import math
+
 import numpy as np
 import pywt
 from scipy.stats import kurtosis, skew
-
-from src.utils.fault_frequencies import compute_fault_frequencies
 
 EPS = 1e-12
 N_FFT_BANDS = 64
@@ -23,6 +23,16 @@ HARMONICS = (1, 2, 3)
 TIME_NAMES = ["t_log_rms", "t_log_std", "t_log_mabs", "t_log_peak", "t_log_p2p", "t_crest",
               "t_kurt", "t_skew", "t_impulse", "t_shape", "t_clearance"]
 WPT_STATS = ("loge", "kurt", "crest")
+
+
+def compute_fault_frequencies(N_balls, d_mm, D_mm, alpha_deg, f_shaft_hz):
+    """Bearing defect frequencies in Hz: BPFO, BPFI, BSF, FTF and the shaft harmonics f_s, 2f_s, 3f_s."""
+    ratio = (d_mm / D_mm) * math.cos(math.radians(alpha_deg))
+    return {"BPFO": float((N_balls / 2) * f_shaft_hz * (1 - ratio)),
+            "BPFI": float((N_balls / 2) * f_shaft_hz * (1 + ratio)),
+            "BSF": float((D_mm / (2 * d_mm)) * f_shaft_hz * (1 - ratio ** 2)),
+            "FTF": float((f_shaft_hz / 2) * (1 - ratio)),
+            "f_s": float(f_shaft_hz), "2f_s": float(2 * f_shaft_hz), "3f_s": float(3 * f_shaft_hz)}
 
 
 def feature_names():

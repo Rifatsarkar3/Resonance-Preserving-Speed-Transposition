@@ -1,0 +1,33 @@
+# ─── Virtual environments ──────────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ─── Python ────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.ipynb_checkpoints/
+
+# ─── Local agent / editor state ────────────────────────────────────────
+.claude/
+.vscode/
+.idea/
+
+# ─── Raw datasets (large; public — download separately, do not redistribute)
+data/
+
+# ─── Model weights, evaluation cache, smoke runs, logs ─────────────────
+*.pt
+*.pth
+*.ckpt
+outputs/tevc/cache/
+outputs/tevc/*_smoke.json
+*.log
+
+# ─── OS cruft ──────────────────────────────────────────────────────────
+Thumbs.db
+.DS_Store

@@ -10,13 +10,13 @@ import numpy as np
 import pandas as pd
 
 FS = 50000.0
+ROOT = Path("data/raw/JNU")
 FAULT_LABELS = {"n": 0, "ib": 1, "ob": 2, "tb": 3}
-# Same bearing geometry as src/utils/fault_frequencies.py (JNU_ER16K_TEST_CASE)
-GEOMETRY = {"N_balls": 8, "d_mm": 7.5, "D_mm": 38.5, "alpha_deg": 0.0}
+GEOMETRY = {"N_balls": 8, "d_mm": 7.5, "D_mm": 38.5, "alpha_deg": 0.0}     # ER-16K bearing
 
 
 def load_recordings(jnu_dir):
-    """Return {(label, rpm): signal} for every JNU csv (same parsing as scripts/h2_extrapolation.py)."""
+    """Return {(label, rpm): signal} for every JNU csv (same parsing as the earlier RPST experiments)."""
     recs = {}
     for csv_file in sorted(Path(jnu_dir).glob("*.csv")):
         prefix = csv_file.stem.split("_")[0]

@@ -1,16 +1,27 @@
 """Fast CNN training / inference for recipe evaluation (the expensive fitness of the deep path).
 
-Same models, optimiser and per-window z-normalisation as the baseline runs (scripts/h2_extrapolation.py);
+Same models (tevc/models.py), optimiser and per-window z-normalisation as the earlier RPST baseline runs;
 fixed epoch budget and the last checkpoint, because no labelled validation data exist at the target speed.
 """
+import random
+
 import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.baselines import BASELINE_REGISTRY
-from src.utils.reproducibility import set_all_seeds
+from tevc.models import MODELS
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+def set_all_seeds(seed):
+    """Seed python, numpy and torch; deterministic cuDNN."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 def znorm(W):
@@ -25,7 +36,7 @@ def _logits(model, x):
 
 def train_cnn(W, y, model_name="WDCNN", epochs=30, seed=42, batch_size=32, lr=1e-3):
     set_all_seeds(seed)
-    model = BASELINE_REGISTRY[model_name](signal_length=W.shape[1], n_classes=int(y.max()) + 1, dropout=0.3).to(DEVICE)
+    model = MODELS[model_name](signal_length=W.shape[1], n_classes=int(y.max()) + 1, dropout=0.3).to(DEVICE)
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
     X = torch.tensor(znorm(W), device=DEVICE)
     Y = torch.tensor(y, dtype=torch.long, device=DEVICE)

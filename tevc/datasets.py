@@ -10,10 +10,7 @@ from pathlib import Path
 import numpy as np
 import scipy.io as sio
 
-from src.utils.config import Config
 from tevc import jnu_data
-
-_cfg = Config.from_yaml("config.yaml")
 
 
 class JNU:
@@ -29,7 +26,7 @@ class JNU:
     @staticmethod
     @lru_cache(maxsize=None)
     def _recordings():
-        return jnu_data.load_recordings(Path(_cfg.data.jnu_raw_root) / "JNU")
+        return jnu_data.load_recordings(jnu_data.ROOT)
 
     @classmethod
     def entries(cls, role, rpm):
@@ -40,6 +37,7 @@ class JNU:
 class PU:
     """Paderborn vibration_1 (64 kHz), bearing 6203, M07_F10 so only speed differs; bearings as in G1."""
     name, fs, win, hop = "pu", 64000.0, 16000, 8000
+    root = Path("data/raw/PU")
     cap_fit, cap_eval = 80, 80
     n_classes = 4
     geometry = {"N_balls": 8, "d_mm": 6.75, "D_mm": 29.05, "alpha_deg": 0.0}
@@ -59,7 +57,7 @@ class PU:
 
     @classmethod
     def entries(cls, role, rpm):
-        root, cond = Path(_cfg.data.pu_raw_root) / "PU", cls.condition[rpm]
+        root, cond = cls.root, cls.condition[rpm]
         return [(label, f"{b}_{cond}_{rep}", cls._vibration(str(root / b / f"{cond}_{b}_{rep}.mat")), 0.0, 1.0)
                 for label, bearings in cls.class_bearings.items() for b in bearings for rep in cls.reps[role]]
 

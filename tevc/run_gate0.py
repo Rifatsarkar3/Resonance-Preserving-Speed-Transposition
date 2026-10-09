@@ -17,7 +17,6 @@ from pymoo.indicators.hv import HV
 from pymoo.indicators.igd import IGD
 from scipy.stats import wilcoxon
 
-from src.utils.config import Config
 from tevc import features, jnu_data, synthesis
 from tevc.fs_nsga import nd_indices, run_nsga2
 from tevc.knn_fitness import KNNEvaluator
@@ -137,8 +136,7 @@ def main():
     CACHE.mkdir(parents=True, exist_ok=True)
 
     t0 = time.time()
-    cfg = Config.from_yaml("config.yaml")
-    recs = jnu_data.load_recordings(Path(cfg.data.jnu_raw_root) / "JNU")
+    recs = jnu_data.load_recordings(jnu_data.ROOT)
     sets = build_sets(recs, tasks)
     D = len(features.feature_names())
     ev = {name: KNNEvaluator(s["X"], s["y"], s["rec"], s["start"], s["start"] + WIN) for name, s in sets.items()
