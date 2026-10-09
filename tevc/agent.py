@@ -13,14 +13,21 @@ CHANGE = np.log(1.05)       # perception: |ln(s_t / s_prev)| above this is a cha
 RECUR = np.log(1.02)        # recurrence: a past environment within this |Δd| is the same regime
 N_CANDIDATES = 1000         # random candidates ranked by the surrogate for a new initial population
 N_MEMORY = 2                # deployed recipes of the nearest past environments seeded into a new search
+FULL = {"n_gen": 3, "n_off": 5, "n_reeval": 3}          # 12 + 15 + 3 = 30 evaluations
 REDUCED = {"n_gen": 1, "n_off": 5, "n_reeval": 1}       # with 4 memory recipes: B / 3 = 10 evaluations
+NO_REEVAL = {"n_reeval": 0}                              # ablation: re-evaluation budget goes to offspring
 N_REDUCED_INIT = 4
 VISIT_SEED_STEP = 7919      # a recurrence trains fresh models instead of re-reading cached ones
 
 
 class Agent:
-    def __init__(self, library_rpm, seeds, run_seed=0, beta=None):
+    """memory / surrogate / reeval switch the agent's components off for the ablations (spec §5)."""
+
+    def __init__(self, library_rpm, seeds, run_seed=0, beta=None, memory=True, surrogate=True, reeval=True):
         self.library_rpm, self.seeds, self.beta, self.run_seed = float(library_rpm), seeds, beta, run_seed
+        self.memory, self.use_surrogate = memory, surrogate
+        self.full, self.reduced = ((FULL, REDUCED) if reeval else
+                                   ({**FULL, **NO_REEVAL, "n_off": 6}, {**REDUCED, **NO_REEVAL, "n_off": 6}))
         self.prev_rpm = self.library_rpm
         self.archive = []       # (d, genes, fitness) of every evaluation
         self.deployed = []      # (d, Trial) per handled environment
@@ -36,6 +43,9 @@ class Agent:
         return Surrogate(seed=self.run_seed).fit(X, y)
 
     def _screen(self, d):
+        if not self.use_surrogate:
+            return None
+
         def screen(candidates, trials):
             s = self._surrogate(d, trials)
             return s.acquisition(candidates, d) if s.ready else np.zeros(len(candidates))
@@ -58,8 +68,9 @@ class Agent:
             return init_rng.random((N_INIT, N_GENES))       # first change: the same random start as GA-RESTART
         nearest = sorted(self.deployed, key=lambda e: abs(e[0] - d))[:N_MEMORY]
         candidates = op_rng.random((N_CANDIDATES, N_GENES))
-        s = self._surrogate(d, [])
-        order = np.argsort(-s.acquisition(candidates, d), kind="stable") if s.ready else np.arange(N_CANDIDATES)
+        s = self._surrogate(d, []) if self.use_surrogate else None
+        order = (np.argsort(-s.acquisition(candidates, d), kind="stable") if s is not None and s.ready
+                 else np.arange(N_CANDIDATES))
         return np.array(self._distinct([encode(t.recipe) for _, t in nearest] + list(candidates[order]), N_INIT))
 
     def handle(self, evaluator, env, init_rng, op_rng):
@@ -68,6 +79,8 @@ class Agent:
         d = self.descriptor(env.rpm)
         changed = abs(np.log(env.rpm / self.prev_rpm)) > CHANGE
         self.prev_rpm = env.rpm
+        if not self.memory:
+            self.archive, self.deployed = [], []        # ablation: every change starts from scratch
         if not changed and self.deployed:
             self.log.append({"env": env.name, "changed": False, "recurrence": False, "evaluations": 0})
             return [self.deployed[-1][1]], []
@@ -80,11 +93,11 @@ class Agent:
                                   N_REDUCED_INIT)
             seeds = tuple(s + VISIT_SEED_STEP * self.visits for s in self.seeds)
             trials = ga_search(evaluator, env, init, op_rng, seeds, screen=self._screen(d), beta=self.beta,
-                               **REDUCED)
+                               **self.reduced)
         else:
             carried = []
             trials = ga_search(evaluator, env, self._initial(d, init_rng, op_rng), op_rng, self.seeds,
-                               screen=self._screen(d), beta=self.beta)
+                               screen=self._screen(d), beta=self.beta, **self.full)
         self.archive += [(d, encode(t.recipe), t.fitness) for t in trials]
         self.deployed.append((d, max(carried + trials, key=lambda t: t.fitness)))
         self.log.append({"env": env.name, "changed": True, "recurrence": bool(past), "evaluations": len(trials)})

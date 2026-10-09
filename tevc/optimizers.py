@@ -8,6 +8,9 @@ re-evaluated with a second training seed.
 from dataclasses import dataclass
 
 import numpy as np
+from scipy.stats import norm
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import ConstantKernel, Matern, WhiteKernel
 
 from tevc.recipe import COPIES, N_FFTS, Recipe
 
@@ -148,4 +151,41 @@ def random_search(evaluator, env, rng, seed, budget=B):
     search = EnvSearch(evaluator, env, budget)
     for g in rng.random((budget, N_GENES)):
         search.run(decode(g), seed)
+    return search.trials
+
+
+def expected_improvement(gp, X, best, xi=0.01):
+    mu, sd = gp.predict(X, return_std=True)
+    sd = np.maximum(sd, 1e-9)
+    z = (mu - best - xi) / sd
+    return (mu - best - xi) * norm.cdf(z) + sd * norm.pdf(z)
+
+
+def bo_search(evaluator, env, init_genes, rng, seed, d=0.0, past=(), n_seq=B - N_INIT, n_candidates=2000):
+    """GP expected-improvement search: init_genes, then n_seq sequential picks (spec §5, BO). `past` =
+    [(d, genes, fitness)] of earlier environments conditions the GP on genes ⊕ d (WARM-TRANSFER)."""
+    search = EnvSearch(evaluator, env, len(init_genes) + n_seq)
+    X, y = [np.r_[g, dp] for dp, g, _ in past], [f for _, _, f in past]
+    for g in init_genes:
+        r = decode(g)
+        if not search.done(r, seed):
+            X.append(np.r_[encode(r), d])
+            y.append(search.run(r, seed))
+    kernel = ConstantKernel(1.0) * Matern(length_scale=np.ones(N_GENES + 1), nu=2.5) + WhiteKernel(1e-2)
+    for _ in range(n_seq):
+        gp = GaussianProcessRegressor(kernel, normalize_y=True, n_restarts_optimizer=2, random_state=seed)
+        gp.fit(np.array(X), np.array(y))
+        done = {t.recipe for t in search.trials if t.seed == seed}
+        candidates, recipes = [], []
+        for c in rng.random((n_candidates, N_GENES)):
+            r = decode(c)
+            if r not in done:
+                done.add(r)
+                candidates.append(encode(r))
+                recipes.append(r)
+        best_here = max(t.fitness for t in search.trials)
+        ei = expected_improvement(gp, np.column_stack([candidates, np.full(len(candidates), d)]), best_here)
+        i = int(np.argmax(ei))
+        X.append(np.r_[candidates[i], d])
+        y.append(search.run(recipes[i], seed))
     return search.trials

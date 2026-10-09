@@ -14,6 +14,9 @@ class FakeEvaluator:
         f = 1.0 - recipe.beta + 0.1 * recipe.n_targets - abs(recipe.q_hi - 0.9) + 1e-3 * (seed % 7)
         return Evaluation(f, seed, 0.0, False)
 
+    def true_accuracy(self, env, recipe, seed):     # scoring side (driver / oracle), never the agent
+        return 1.0 - recipe.beta
+
 
 @pytest.fixture
 def fake_evaluator():

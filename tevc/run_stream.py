@@ -16,37 +16,72 @@ import numpy as np
 from scipy.stats import wilcoxon
 
 from tevc.agent import Agent
-from tevc.evaluator import RecipeEvaluator
-from tevc.optimizers import B, N_GENES, N_INIT, Trial, ga_search, random_search
+from tevc.evaluator import Evaluation, RecipeEvaluator
+from tevc.optimizers import B, N_GENES, N_INIT, Trial, bo_search, encode, ga_search, random_search
 from tevc.recipe import ANCHORS
 from tevc.stream import assert_disjoint, jnu_stream, ottawa_stream, pu_stream
 
 STREAMS = {"jnu": jnu_stream, "pu": pu_stream, "ottawa": ottawa_stream}
 METHODS = ("STATIC-NONE", "STATIC-H2", "RANDOM", "GA-RESTART", "AGENT", "AGENT-B1")
+EXTRA = ("BO", "WARM-TRANSFER", "ORACLE-FITNESS", "AGENT-NOMEM", "AGENT-NOSURR", "AGENT-NOREEVAL")
+AGENT_VARIANTS = {"AGENT": {}, "AGENT-B1": {"beta": 1.0}, "AGENT-NOMEM": {"memory": False},
+                  "AGENT-NOSURR": {"surrogate": False}, "AGENT-NOREEVAL": {"reeval": False}}
 RUN_SEEDS = (42, 1337, 2025, 999, 7)
 REEVAL_SEED_OFFSET = 10_000
 OUT_DIR = Path("outputs/tevc")
+
+
+class OracleEvaluator:
+    """ORACLE-FITNESS: fitness = true test-set accuracy (optimistic bound: selection and scoring share T)."""
+
+    def __init__(self, evaluator):
+        self.evaluator = evaluator
+
+    def evaluate(self, env, recipe, seed):
+        e = self.evaluator.evaluate(env, recipe, seed)
+        return Evaluation(self.evaluator.true_accuracy(env, recipe, seed), seed, e.cost_s, e.cached)
 
 
 def _rng(run_seed, env_index, purpose):
     return np.random.default_rng([run_seed, env_index, purpose])
 
 
+def _top_genes(trials, n):
+    out = []
+    for t in sorted(trials, key=lambda t: -t.fitness):
+        if t.recipe not in [r for r, _ in out]:
+            out.append((t.recipe, encode(t.recipe)))
+    return np.array([g for _, g in out[:n]])
+
+
 def run_method(method, stream, evaluator, run_seed):
     """[(carried, trials)] per environment for one method and one independent run."""
     seeds = (run_seed, run_seed + REEVAL_SEED_OFFSET)
-    agent = (Agent(stream.library_rpm, seeds, run_seed=run_seed, beta=1.0 if method == "AGENT-B1" else None)
-             if method.startswith("AGENT") else None)
+    agent = (Agent(stream.library_rpm, seeds, run_seed=run_seed, **AGENT_VARIANTS[method])
+             if method in AGENT_VARIANTS else None)
+    past, previous = [], None             # WARM-TRANSFER: every earlier evaluation, previous environment's trials
     out = []
     for i, env in enumerate(stream.environments):
         init_rng, op_rng = _rng(run_seed, i, 0), _rng(run_seed, i, 1)   # shared starts across methods
+        start = _rng(run_seed, i, 0).random((N_INIT, N_GENES))         # = the agent's first-change start
+        d = float(np.log(env.rpm / stream.library_rpm))
         if method in ("STATIC-NONE", "STATIC-H2"):
             recipe = ANCHORS["NONE" if method == "STATIC-NONE" else "H2_LIKE"]
             out.append(([], [Trial(recipe, run_seed, evaluator.evaluate(env, recipe, run_seed).fitness)]))
         elif method == "RANDOM":
             out.append(([], random_search(evaluator, env, init_rng, run_seed)))
         elif method == "GA-RESTART":
-            out.append(([], ga_search(evaluator, env, init_rng.random((N_INIT, N_GENES)), op_rng, seeds)))
+            out.append(([], ga_search(evaluator, env, start, op_rng, seeds)))
+        elif method == "ORACLE-FITNESS":
+            out.append(([], ga_search(OracleEvaluator(evaluator), env, start, op_rng, seeds)))
+        elif method == "BO":
+            out.append(([], bo_search(evaluator, env, start, op_rng, run_seed, d=d)))
+        elif method == "WARM-TRANSFER":
+            init = _top_genes(previous, N_INIT) if previous else start
+            trials = bo_search(evaluator, env, init, op_rng, run_seed, d=d, past=past)
+            past += [(d, encode(t.recipe), t.fitness) for t in trials]
+            previous = trials
+            out.append(([], trials))
         else:
             out.append(agent.handle(evaluator, env, init_rng, op_rng))
     return out
@@ -122,16 +157,20 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", choices=sorted(STREAMS), required=True)
     ap.add_argument("--runs", type=int, default=len(RUN_SEEDS))
-    ap.add_argument("--methods", default=",".join(METHODS))
+    ap.add_argument("--methods", default=",".join(METHODS), help=f"comma list from {METHODS + EXTRA}")
+    ap.add_argument("--tag", default="", help="output stream_<dataset>_<tag>.json (keeps the main grid's file)")
     ap.add_argument("--confirmatory", action="store_true", help="required for Ottawa: frozen protocol, run once")
     args = ap.parse_args()
     if args.dataset == "ottawa" and not args.confirmatory:
         raise SystemExit("Ottawa is the confirmatory set: freeze and pre-register the protocol, then pass --confirmatory")
     methods = args.methods.split(",")
+    unknown = set(methods) - set(METHODS + EXTRA)
+    if unknown:
+        raise SystemExit(f"unknown methods {sorted(unknown)}")
     stream = STREAMS[args.dataset]()
     assert_disjoint(stream)
     evaluator = RecipeEvaluator(stream)
-    out_path = OUT_DIR / f"stream_{args.dataset}.json"
+    out_path = OUT_DIR / f"stream_{args.dataset}{'_' + args.tag if args.tag else ''}.json"
     results, t0 = {m: {} for m in methods}, time.time()
     for run_seed in RUN_SEEDS[:args.runs]:
         for m in methods:

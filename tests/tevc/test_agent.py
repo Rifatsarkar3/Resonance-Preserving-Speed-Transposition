@@ -41,6 +41,19 @@ def test_second_change_is_seeded_from_memory(fake_evaluator):
     assert out[1][1][0].recipe == agent.deployed[0][1].recipe   # nearest past deployed recipe comes first
 
 
+def test_ablations_keep_the_budget(fake_evaluator):
+    for flags, budgets in (({"memory": False}, [30, 30, 30]), ({"surrogate": False}, [30, 30, 10]),
+                           ({"reeval": False}, [30, 30, 10])):
+        agent = Agent(600.0, (1, 2), run_seed=0, **flags)
+        out = [agent.handle(fake_evaluator, env, np.random.default_rng([0, i, 0]), np.random.default_rng([0, i, 1]))
+               for i, env in enumerate(ORDER)]
+        assert [len(trials) for _, trials in out] == budgets
+        if flags == {"reeval": False}:
+            assert {t.seed for _, trials in out for t in trials} == {1, 1 + 7919}     # no second-seed models
+        if flags == {"memory": False}:
+            assert all(carried == [] for carried, _ in out)
+
+
 def test_beta1_control_stays_at_plain_resampling(fake_evaluator):
     _, out = _run(fake_evaluator, beta=1.0)
     assert all(t.recipe.beta == 1.0 for _, trials in out for t in trials)
