@@ -12,9 +12,10 @@ validation, not something the agent sees. Metrics (class-averaged; "error" lower
   kurtosis_error  |Δ ln| of the median envelope kurtosis + 3                               (impulsiveness)
   feature_mmd     MMD² between the 561-feature banks, standardised by the real windows     (overall)
 "untransposed" = real library windows at the source speed (how far apart the two speeds are to begin with).
-Ottawa is never touched. Run from repo root:  python -m tevc.probes.operator_fidelity
-  -> outputs/tevc/probe_operator_fidelity.json
+Ottawa is never touched. Run from repo root:  python -m tevc.probes.operator_fidelity [--family wsola]
+  -> outputs/tevc/probe_operator_fidelity.json (phase vocoder) / probe_operator_fidelity_wsola.json (WSOLA, β = 0)
 """
+import argparse
 import json
 from pathlib import Path
 
@@ -90,29 +91,38 @@ def _compare(synth, real, ds, f_shaft):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--family", choices=("pv", "wsola"), default="pv")
+    args = ap.parse_args()
+    out = OUT if args.family == "pv" else OUT.with_name("probe_operator_fidelity_wsola.json")
+    operator = synthesis.transpose if args.family == "pv" else synthesis.transpose_wsola
     results = {}
     for name, directions in DIRECTIONS.items():
         for src, tgt in directions:
             stream = STREAMS[name](library_rpm=src, sequence=(tgt,))
             ds, env = stream.dataset, stream.environments[0]
             f_tgt = tgt / 60.0
-            ops = {"untransposed": None, "beta=1 (resampling)": (1.0, 256)}
-            ops.update({f"beta={b:g} n_fft={n}": (b, n) for b in BETAS for n in N_FFTS})
+            if args.family == "pv":
+                ops = {"untransposed": None, "beta=1 (resampling)": (1.0, 256)}
+                ops.update({f"beta={b:g} n_fft={n}": (b, n) for b in BETAS for n in N_FFTS})
+            else:
+                ops = {"untransposed": None}
+                ops.update({f"wsola beta=0 frame={n}": (0.0, n) for n in N_FFTS})
             task = {}
             for label, op in ops.items():
                 if op is None:
                     synth = make_windows(stream.library_entries, ds.win, ds.hop, CAP)
                 else:
-                    beta, n_fft = op
+                    beta, size = op
                     synth = make_windows(stream.library_entries, ds.win, ds.hop, CAP,
-                                         synth=lambda lab, rec, sig, b=beta, n=n_fft:
-                                         (synthesis.transpose(sig, src, tgt, b, n), tgt / src))
+                                         synth=lambda lab, rec, sig, b=beta, n=size:
+                                         (operator(sig, src, tgt, b, n), tgt / src))
                 task[label] = _compare(synth, env.U, ds, f_tgt)
                 print(f"{name} {src}->{tgt} {label:24s} {json.dumps({k: round(v, 4) for k, v in task[label].items()})}",
                       flush=True)
             results[f"{name}:{src}->{tgt}"] = task
-            OUT.write_text(json.dumps(results, indent=1))
-    print("->", OUT)
+            out.write_text(json.dumps(results, indent=1))
+    print("->", out)
 
 
 if __name__ == "__main__":

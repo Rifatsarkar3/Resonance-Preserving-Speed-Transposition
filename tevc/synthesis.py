@@ -43,3 +43,37 @@ def transpose(y, src_rpm, tgt_rpm, beta=0.0, n_fft=N_FFT):
         D2 = librosa.phase_vocoder(D, rate=r ** (1 - beta), hop_length=hop)
         y = librosa.istft(D2, hop_length=hop, n_fft=n_fft, length=int(len(y) / r ** (1 - beta))).astype(np.float32)
     return y
+
+
+def wsola(y, rate, frame=256):
+    """Waveform-similarity overlap-add time-scale modification (Verhelst & Roelands, 1993); output length
+    len(y) / rate. Local waveform segments are copied unchanged and only re-spaced, so resonance bands and each
+    impact's ring-down are kept (no spectral smearing) while the impulse rate scales by `rate`."""
+    y = np.asarray(y, dtype=np.float64)
+    hop, tol = frame // 2, frame // 2
+    win = np.hanning(frame + 1)[:frame]             # periodic Hann: overlap-adds to 1 at 50 % overlap
+    n_out = int(len(y) / rate)
+    out = np.zeros(n_out + frame)
+    prev = 0
+    for k in range((n_out - frame) // hop + 1):
+        start = 0
+        if k:
+            nominal = int(round(k * hop * rate))
+            lo, hi = max(0, nominal - tol), min(len(y) - frame, nominal + tol)
+            target = y[prev + hop: prev + hop + frame]      # natural continuation of the last copied segment
+            if hi < lo or len(target) < frame:
+                break
+            start = lo + int(np.argmax(np.correlate(y[lo:hi + frame], target, mode="valid")))
+        out[k * hop: k * hop + frame] += win * y[start: start + frame]
+        prev = start
+    return out[:n_out].astype(np.float32)
+
+
+def transpose_wsola(y, src_rpm, tgt_rpm, beta=0.0, frame=256):
+    """As transpose(), with WSOLA instead of the phase vocoder for the time-scale part."""
+    r = tgt_rpm / src_rpm
+    if beta > 0:
+        y = resample(y, src_rpm, src_rpm * r ** beta)
+    if beta < 1:
+        y = wsola(y, r ** (1 - beta), frame)
+    return y
