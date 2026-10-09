@@ -2,7 +2,7 @@ import numpy as np
 
 from tevc.optimizers import Trial
 from tevc.recipe import Recipe
-from tevc.run_stream import OracleEvaluator, run_level_tests, run_method, score
+from tevc.run_stream import OracleEvaluator, report, run_level_tests, run_method, score
 from tevc.stream import Environment, Stream
 
 E800, E1000 = Environment("fake@800", 800.0, {}, {}), Environment("fake@1000", 1000.0, {}, {})
@@ -48,6 +48,12 @@ def test_run_level_test_counts_runs_not_environments():
 
 def test_run_level_test_gives_no_credit_for_mixed_signs():
     assert run_level_tests(_results([0.1, -0.1, 0.1, -0.1]), "deployed_acc")["OTHER"]["p"] > 0.4
+
+
+def test_report_lists_only_the_runs_done():
+    env = {"deployed_acc": 0.9, "auc": 0.8, "n_evals": 30}
+    results = {"AGENT": {"42": [env], "1337": [env]}, "GA-RESTART": {"42": [env]}, "RANDOM": {}}
+    assert report("jnu", ["AGENT", "GA-RESTART", "RANDOM"], results, 0.0)["run_seeds"] == [42, 1337]
 
 
 def test_every_search_spends_the_budget_per_change(fake_evaluator):

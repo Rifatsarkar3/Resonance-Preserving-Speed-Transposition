@@ -150,7 +150,8 @@ def report(dataset, methods, results, elapsed):
         a, g = summary["AGENT"], summary["GA-RESTART"]
         gate = {"agent_acc_gt_ga_restart": a["acc_mean"] > g["acc_mean"],
                 "agent_auc_gt_ga_restart": a["auc_mean"] > g["auc_mean"]}
-    return {"dataset": dataset, "budget_per_change": B, "run_seeds": list(RUN_SEEDS), "methods": list(methods),
+    run_seeds = [s for s in RUN_SEEDS if any(str(s) in runs for runs in done.values())]
+    return {"dataset": dataset, "budget_per_change": B, "run_seeds": run_seeds, "methods": list(methods),
             "fitness": "cluster-balanced IM on the unlabelled buffer", "elapsed_s": round(elapsed),
             "summary": summary, "dev_gate": gate,
             "tests_deployed_acc": run_level_tests(done, "deployed_acc"), "tests_auc": run_level_tests(done, "auc"),
