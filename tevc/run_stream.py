@@ -4,7 +4,7 @@
     python -m tevc.run_stream --dataset pu --runs 1     # first run only
 Writes outputs/tevc/stream_<dataset>.json after every (run, method), so partial results are readable early.
 Methods see only the agent-visible fitness; true accuracy (evaluator.true_accuracy) is used here, for scoring only.
-Ottawa is the confirmatory set (protocol frozen first, run once): it requires --confirmatory.
+Ottawa is the confirmatory set: it runs only through the frozen protocol in tevc.confirmatory.
 """
 import argparse
 import itertools
@@ -177,10 +177,9 @@ def main():
     ap.add_argument("--runs", type=int, default=len(RUN_SEEDS))
     ap.add_argument("--methods", default=",".join(METHODS), help=f"comma list from {METHODS + EXTRA}")
     ap.add_argument("--tag", default="", help="output stream_<dataset>_<tag>.json (keeps the main grid's file)")
-    ap.add_argument("--confirmatory", action="store_true", help="required for Ottawa: frozen protocol, run once")
     args = ap.parse_args()
-    if args.dataset == "ottawa" and not args.confirmatory:
-        raise SystemExit("Ottawa is the confirmatory set: freeze and pre-register the protocol, then pass --confirmatory")
+    if args.dataset == "ottawa":
+        raise SystemExit("Ottawa is the confirmatory set: it runs only through the frozen protocol, tevc.confirmatory")
     methods = args.methods.split(",")
     unknown = set(methods) - set(METHODS + EXTRA)
     if unknown:

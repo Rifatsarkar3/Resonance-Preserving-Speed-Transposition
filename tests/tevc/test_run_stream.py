@@ -1,8 +1,9 @@
 import numpy as np
+import pytest
 
 from tevc.optimizers import Trial
 from tevc.recipe import Recipe
-from tevc.run_stream import DFIDEvaluator, OracleEvaluator, report, run_level_tests, run_method, score
+from tevc.run_stream import DFIDEvaluator, OracleEvaluator, main, report, run_level_tests, run_method, score
 from tevc.stream import Environment, Stream
 
 E800, E1000 = Environment("fake@800", 800.0, {}, {}), Environment("fake@1000", 1000.0, {}, {})
@@ -69,3 +70,9 @@ def test_report_lists_only_the_runs_done():
 def test_every_search_spends_the_budget_per_change(fake_evaluator):
     for m in ("RANDOM", "GA-RESTART", "BO", "WARM-TRANSFER", "ORACLE-FITNESS"):
         assert [len(trials) for _, trials in run_method(m, STREAM, fake_evaluator, 7)] == [30, 30, 30]
+
+
+def test_ottawa_runs_only_through_the_frozen_protocol(monkeypatch):
+    monkeypatch.setattr("sys.argv", ["run_stream", "--dataset", "ottawa"])
+    with pytest.raises(SystemExit, match="tevc.confirmatory"):
+        main()
