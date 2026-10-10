@@ -1,4 +1,5 @@
-"""Recipe encoding, GA operators and the memory-less searches of spec §5 (RANDOM, GA-RESTART).
+"""Recipe encoding, GA operators, the memory-less searches of spec §5 (RANDOM, GA-RESTART, BO) and the agent's
+evolutionary expected-improvement search (ei_search).
 
 A recipe is searched as 7 genes in [0, 1]; `decode` maps any gene vector to a valid Recipe and `encode` maps a
 recipe to the centre of its discrete levels. Searches see only the agent-visible fitness (`Evaluation.fitness`).
@@ -185,6 +186,49 @@ def bo_search(evaluator, env, init_genes, rng, seed, d=0.0, past=(), n_seq=B - N
                 recipes.append(r)
         best_here = max(t.fitness for t in search.trials)
         ei = expected_improvement(gp, np.column_stack([candidates, np.full(len(candidates), d)]), best_here)
+        i = int(np.argmax(ei))
+        X.append(np.r_[candidates[i], d])
+        y.append(search.run(recipes[i], seed))
+    return search.trials
+
+
+def fit_gp(X, y, seed):
+    """GP world model on rows [genes, d]: Matern 5/2 with one length scale per input, plus white noise."""
+    kernel = ConstantKernel(1.0) * Matern(length_scale=np.ones(N_GENES + 1), nu=2.5) + WhiteKernel(1e-2)
+    return GaussianProcessRegressor(kernel, normalize_y=True, n_restarts_optimizer=2,
+                                    random_state=seed).fit(np.array(X), np.array(y))
+
+
+def ei_search(evaluator, env, init_genes, rng, seed, d, archive=(), elites=(), incumbent=-np.inf, beta=None,
+              evolve=True, budget=B, n_random=1000, n_evolved=1000, n_parents=10):
+    """The agent's action: evaluate init_genes, then sequential expected-improvement picks under a GP on genes ⊕ d
+    fitted to `archive` [(d, genes, fitness)] of earlier evaluations plus this search. Candidates are n_random
+    uniform gene vectors and, with `evolve`, n_evolved SBX / polynomial-mutation offspring of the n_parents fittest
+    of this search and `elites` [(genes, fitness)] of the same regime. `incumbent` is the fitness to beat (a
+    redeployed model). Recipes already trained with `seed` here are never retrained."""
+    search = EnvSearch(evaluator, env, budget)
+    X, y = [np.r_[g, dp] for dp, g, _ in archive], [f for _, _, f in archive]
+    for g in init_genes:
+        r = decode(g, beta)
+        if not search.done(r, seed) and len(search.trials) < budget:
+            X.append(np.r_[encode(r), d])
+            y.append(search.run(r, seed))
+    while len(search.trials) < budget:
+        gp = fit_gp(X, y, seed)
+        pool = list(rng.random((n_random, N_GENES)))
+        parents = sorted([(t.fitness, encode(t.recipe)) for t in search.trials] + [(f, g) for g, f in elites],
+                         key=lambda e: -e[0])[:n_parents]
+        if evolve and len(parents) >= 2:
+            pool += offspring([g for _, g in parents], np.array([f for f, _ in parents]), n_evolved, rng)
+        done, candidates, recipes = {t.recipe for t in search.trials}, [], []
+        for c in pool:
+            r = decode(c, beta)
+            if r not in done:
+                done.add(r)
+                candidates.append(encode(r))
+                recipes.append(r)
+        best = max([incumbent] + [t.fitness for t in search.trials])
+        ei = expected_improvement(gp, np.column_stack([candidates, np.full(len(candidates), d)]), best)
         i = int(np.argmax(ei))
         X.append(np.r_[candidates[i], d])
         y.append(search.run(recipes[i], seed))

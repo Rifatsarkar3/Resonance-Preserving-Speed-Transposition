@@ -1,9 +1,10 @@
 import numpy as np
 import pytest
 
+from tevc.agent import PRIOR
 from tevc.optimizers import Trial
 from tevc.recipe import Recipe
-from tevc.run_stream import DFIDEvaluator, OracleEvaluator, main, report, run_level_tests, run_method, score
+from tevc.run_stream import AGENT_VARIANTS, DFIDEvaluator, OracleEvaluator, main, report, run_level_tests, run_method, score
 from tevc.stream import Environment, Stream
 
 E800, E1000 = Environment("fake@800", 800.0, {}, {}), Environment("fake@1000", 1000.0, {}, {})
@@ -42,8 +43,11 @@ def test_agent_dfid_searches_and_deploys_on_dfid(fake_evaluator):
 
 def test_searches_share_their_first_change_start(fake_evaluator):
     first = {m: [t.recipe for t in run_method(m, STREAM, fake_evaluator, 42)[0][1][:12]]
-             for m in ("RANDOM", "GA-RESTART", "AGENT", "BO", "ORACLE-FITNESS", "WARM-TRANSFER", "AGENT-DFID")}
-    assert all(v == first["GA-RESTART"] for v in first.values())
+             for m in ("RANDOM", "GA-RESTART", "BO", "ORACLE-FITNESS", "WARM-TRANSFER", "AGENT-NOPRIOR",
+                       "AGENT", "AGENT-DFID")}
+    assert all(first[m] == first["GA-RESTART"] for m in ("RANDOM", "BO", "ORACLE-FITNESS", "WARM-TRANSFER",
+                                                         "AGENT-NOPRIOR"))
+    assert all(first[m] == [PRIOR] + first["GA-RESTART"][:11] for m in ("AGENT", "AGENT-DFID"))
 
 
 def _results(diffs):
@@ -68,7 +72,7 @@ def test_report_lists_only_the_runs_done():
 
 
 def test_every_search_spends_the_budget_per_change(fake_evaluator):
-    for m in ("RANDOM", "GA-RESTART", "BO", "WARM-TRANSFER", "ORACLE-FITNESS"):
+    for m in ("RANDOM", "GA-RESTART", "BO", "WARM-TRANSFER", "ORACLE-FITNESS", *AGENT_VARIANTS):
         assert [len(trials) for _, trials in run_method(m, STREAM, fake_evaluator, 7)] == [30, 30, 30]
 
 

@@ -1,5 +1,9 @@
 """Ottawa confirmatory protocol (spec §5, §8), frozen before any Ottawa model is trained.
 
+STATUS 2026-10-10: version 1 (frozen at 41918f5) was WITHDRAWN before any Ottawa outcome was inspected, because the
+development extras grid showed WARM-TRANSFER beating the v1 agent on PU; the agent is being revised on development
+data (v2). This protocol must be re-frozen, with the author's approval, before Ottawa runs again.
+
 Development is finished: on JNU and PU (10 independent runs each) AGENT passed the development gate (c568066,
 787f889), and the author approved the hypotheses below on 2026-10-10. Every setting — the Ottawa stream (library
 13-16 Hz; 16-19 -> 19-22 -> 22-25 -> 19-22 -> 16-19 Hz), budget B = 30 per change, cluster-balanced IM fitness, the
@@ -41,7 +45,7 @@ OUT = Path("outputs/tevc/ottawa")
 ALPHA = 0.05
 GRIDS = {"core": ("STATIC-NONE", "STATIC-H2", "RANDOM", "GA-RESTART", "AGENT", "AGENT-B1", "AGENT-DFID"),
          "secondary": ("AGENT", "BO", "WARM-TRANSFER", "ORACLE-FITNESS", "AGENT-NOMEM", "AGENT-NOSURR",
-                       "AGENT-NOREEVAL")}
+                       "AGENT-NOEVO", "AGENT-NOPRIOR")}
 PRIMARY = {"H1": ("AGENT", "GA-RESTART", "deployed_acc"), "H2": ("AGENT", "GA-RESTART", "auc"),
            "H3": ("AGENT", "AGENT-B1", "deployed_acc"), "H4": ("AGENT", "STATIC-H2", "deployed_acc")}
 SECONDARY = {"S1": [("AGENT", m, k) for m in ("RANDOM", "STATIC-NONE") for k in ("deployed_acc", "auc")],

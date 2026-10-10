@@ -23,9 +23,11 @@ from tevc.stream import assert_disjoint, jnu_stream, ottawa_stream, pu_stream
 
 STREAMS = {"jnu": jnu_stream, "pu": pu_stream, "ottawa": ottawa_stream}
 METHODS = ("STATIC-NONE", "STATIC-H2", "RANDOM", "GA-RESTART", "AGENT", "AGENT-B1")
-EXTRA = ("BO", "WARM-TRANSFER", "ORACLE-FITNESS", "AGENT-NOMEM", "AGENT-NOSURR", "AGENT-NOREEVAL", "AGENT-DFID")
+EXTRA = ("BO", "WARM-TRANSFER", "ORACLE-FITNESS", "AGENT-NOMEM", "AGENT-NOSURR", "AGENT-NOEVO", "AGENT-NOPRIOR",
+         "AGENT-DFID")
 AGENT_VARIANTS = {"AGENT": {}, "AGENT-B1": {"beta": 1.0}, "AGENT-NOMEM": {"memory": False},
-                  "AGENT-NOSURR": {"surrogate": False}, "AGENT-NOREEVAL": {"reeval": False}, "AGENT-DFID": {}}
+                  "AGENT-NOSURR": {"surrogate": False}, "AGENT-NOEVO": {"evolve": False},
+                  "AGENT-NOPRIOR": {"prior": False}, "AGENT-DFID": {}}
 RUN_SEEDS = (42, 1337, 2025, 999, 7, 3, 11, 101, 2718, 31415)   # 10 runs: exact run-level p can reach 1/1024
 REEVAL_SEED_OFFSET = 10_000
 OUT_DIR = Path("outputs/tevc")
