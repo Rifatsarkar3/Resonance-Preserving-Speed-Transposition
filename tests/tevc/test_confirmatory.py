@@ -14,9 +14,9 @@ def _results(lead):
     return {m: {str(s): envs(0.5 + (lead if m == "AGENT" else 0.0)) for s in RUN_SEEDS} for m in GRIDS["core"]}
 
 
-def test_protocol_names_known_methods_and_four_primary_hypotheses():
+def test_protocol_names_known_methods_and_five_primary_hypotheses():
     assert all(set(g) <= set(METHODS + EXTRA) for g in GRIDS.values()) and len(RUN_SEEDS) == 10
-    assert len(PRIMARY) == 4 and all({a, b} <= set(GRIDS["core"]) for a, b, _ in PRIMARY.values())
+    assert len(PRIMARY) == 5 and all({a, b} <= set(GRIDS["core"]) for a, b, _ in PRIMARY.values())
     for name, rows in SECONDARY.items():
         grid = GRIDS["secondary" if name == "S3" else "core"]
         assert all({a, b} <= set(grid) for a, b, _ in rows)
@@ -26,10 +26,10 @@ def test_holm_steps_down_and_stays_monotone():
     assert np.allclose(holm([0.01, 0.04, 0.03]), [0.03, 0.06, 0.06])
 
 
-def test_a_lead_in_every_run_confirms_all_four():
+def test_a_lead_in_every_run_confirms_all_five():
     v = verdict(_results(0.05))
     assert all(r["confirmed"] and r["wins"] == 10 for r in v.values())
-    assert np.isclose(v["H1"]["p"], 1 / 1024) and np.isclose(v["H1"]["p_holm"], 4 / 1024)
+    assert np.isclose(v["H1"]["p"], 1 / 1024) and np.isclose(v["H1"]["p_holm"], 5 / 1024)
 
 
 def test_no_lead_confirms_nothing():

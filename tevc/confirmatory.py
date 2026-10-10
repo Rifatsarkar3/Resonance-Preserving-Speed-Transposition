@@ -1,26 +1,27 @@
-"""Ottawa confirmatory protocol (spec §5, §8), frozen before any Ottawa model is trained.
+"""Ottawa confirmatory protocol (spec §5, §8), version 2, frozen before any v2 Ottawa model is trained.
 
-STATUS 2026-10-10: version 1 (frozen at 41918f5) was WITHDRAWN before any Ottawa outcome was inspected, because the
-development extras grid showed WARM-TRANSFER beating the v1 agent on PU; the agent is being revised on development
-data (v2). This protocol must be re-frozen, with the author's approval, before Ottawa runs again.
+History: version 1 (41918f5: agent v1, H1-H4) was withdrawn on 2026-10-10, about an hour into its run and before any
+Ottawa outcome was inspected, because the development extras grid showed WARM-TRANSFER beating agent v1 on PU. Its
+partial shard files are kept unopened in outputs/tevc/ottawa/withdrawn_v1/ and are never analysed. The agent was revised
+on development data only (agent v2, a30069e) and passed its pre-stated development gate on JNU and PU (2aa492c,
+tevc.probes.dev_gate). The author approved this version on 2026-10-11.
 
-Development is finished: on JNU and PU (10 independent runs each) AGENT passed the development gate (c568066,
-787f889), and the author approved the hypotheses below on 2026-10-10. Every setting — the Ottawa stream (library
-13-16 Hz; 16-19 -> 19-22 -> 22-25 -> 19-22 -> 16-19 Hz), budget B = 30 per change, cluster-balanced IM fitness, the
-agent, the baselines, TICNN for 40 epochs, RUN_SEEDS — is the code at the commit that adds this file. The runner refuses
-to start when tevc/ differs from a commit and records the commit it ran from.
+Every setting — the Ottawa stream (library 13-16 Hz; 16-19 -> 19-22 -> 22-25 -> 19-22 -> 16-19 Hz), budget B = 30 per
+change, cluster-balanced IM fitness, agent v2, the baselines, TICNN for 40 epochs, RUN_SEEDS — is the code at the
+commit that adds this version. The runner refuses to start when tevc/ differs from a commit and records the commit.
 
 Primary family: one-sided, unit = independent run (10), exact sign-flip test on the run-level mean difference, Holm
-over the four, alpha = 0.05. Each hypothesis is confirmed iff its Holm-adjusted p < alpha; verdicts are reported
+over the five, alpha = 0.05. Each hypothesis is confirmed iff its Holm-adjusted p < alpha; verdicts are reported
 individually, whatever they are.
-    H1  AGENT > GA-RESTART  deployed accuracy   memory + surrogate beat restarting the GA at every change
-    H2  AGENT > GA-RESTART  recovery AUC        ... and recover faster
-    H3  AGENT > AGENT-B1    deployed accuracy   resonance-preserving beats resonance-shifting synthesis
-    H4  AGENT > STATIC-H2   deployed accuracy   search beats the fixed RPST recipe
+    H1  AGENT > GA-RESTART     deployed accuracy   memory + world model beat restarting the GA at every change
+    H2  AGENT > GA-RESTART     recovery AUC        ... and recover faster
+    H3  AGENT > AGENT-B1       deployed accuracy   resonance-preserving beats resonance-shifting synthesis
+    H4  AGENT > STATIC-H2      deployed accuracy   search beats the fixed RPST recipe
+    H5  AGENT > WARM-TRANSFER  recovery AUC        the agent recovers faster than the strongest transfer baseline
 Secondary, reported with bootstrap CIs and Holm within each family, no confirmatory claim:
-    S1  AGENT vs RANDOM and vs STATIC-NONE, accuracy and AUC
+    S1  AGENT vs WARM-TRANSFER accuracy; AGENT vs RANDOM and vs STATIC-NONE, accuracy and AUC
     S2  DFID, the pre-registered secondary fitness: AGENT-DFID vs GA-RESTART, and AGENT vs AGENT-DFID, accuracy and AUC
-    S3  secondary grid: AGENT vs BO, WARM-TRANSFER, ORACLE-FITNESS, AGENT-NOMEM, AGENT-NOSURR, AGENT-NOREEVAL
+    S3  secondary grid: AGENT vs BO, ORACLE-FITNESS, AGENT-NOMEM, AGENT-NOSURR, AGENT-NOEVO, AGENT-NOPRIOR
     S4  fitness validity: Spearman rho(fitness, true accuracy) over all evaluations per environment, IM and DFID
 Each grid runs once; shards split the run seeds and may run in parallel (distinct seeds never share cache entries). A
 re-run after a crash reproduces finished runs from the evaluation cache. Logs show progress only, never accuracy.
@@ -43,12 +44,15 @@ from tevc.stream import assert_disjoint, ottawa_stream
 
 OUT = Path("outputs/tevc/ottawa")
 ALPHA = 0.05
-GRIDS = {"core": ("STATIC-NONE", "STATIC-H2", "RANDOM", "GA-RESTART", "AGENT", "AGENT-B1", "AGENT-DFID"),
-         "secondary": ("AGENT", "BO", "WARM-TRANSFER", "ORACLE-FITNESS", "AGENT-NOMEM", "AGENT-NOSURR",
-                       "AGENT-NOEVO", "AGENT-NOPRIOR")}
+GRIDS = {"core": ("STATIC-NONE", "STATIC-H2", "RANDOM", "GA-RESTART", "WARM-TRANSFER", "AGENT", "AGENT-B1",
+                  "AGENT-DFID"),
+         "secondary": ("AGENT", "BO", "ORACLE-FITNESS", "AGENT-NOMEM", "AGENT-NOSURR", "AGENT-NOEVO",
+                       "AGENT-NOPRIOR")}
 PRIMARY = {"H1": ("AGENT", "GA-RESTART", "deployed_acc"), "H2": ("AGENT", "GA-RESTART", "auc"),
-           "H3": ("AGENT", "AGENT-B1", "deployed_acc"), "H4": ("AGENT", "STATIC-H2", "deployed_acc")}
-SECONDARY = {"S1": [("AGENT", m, k) for m in ("RANDOM", "STATIC-NONE") for k in ("deployed_acc", "auc")],
+           "H3": ("AGENT", "AGENT-B1", "deployed_acc"), "H4": ("AGENT", "STATIC-H2", "deployed_acc"),
+           "H5": ("AGENT", "WARM-TRANSFER", "auc")}
+SECONDARY = {"S1": [("AGENT", "WARM-TRANSFER", "deployed_acc")]
+                   + [("AGENT", m, k) for m in ("RANDOM", "STATIC-NONE") for k in ("deployed_acc", "auc")],
              "S2": [(a, b, k) for a, b in (("AGENT-DFID", "GA-RESTART"), ("AGENT", "AGENT-DFID"))
                     for k in ("deployed_acc", "auc")],
              "S3": [("AGENT", m, k) for m in GRIDS["secondary"][1:] for k in ("deployed_acc", "auc")]}
