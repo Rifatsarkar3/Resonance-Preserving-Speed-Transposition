@@ -12,8 +12,17 @@ cluster-balanced weights of U (Spearman = weighted Pearson of the ranks). A faul
 scores 0.
 Deployment rules: IM (argmax fitness, the frozen D1 rule); V1 argmax PCS; V2 argmax of the mean of the IM and PCS
 ranks; V3 argmax PCS among the TOP_IM candidates with the highest IM.
+
+    python -m tevc.pcs select   # variant choice on the selection archives -> outputs/tevc/pcs_variant.json
+    python -m tevc.pcs gate     # ONE shot, frozen variant, AGENT v2 archives -> outputs/tevc/pcs_gate.json
+Commit pcs_variant.json before running the gate. The gate refuses to run twice or without the variant file, and
+select refuses to run once the gate has. Archived searches are replayed, never re-run: a different deployment's
+downstream effect on the agent's memory is measured on DIRG, where AGENT-PCS runs as a full method.
 """
-from dataclasses import dataclass
+import argparse
+import json
+from dataclasses import asdict, dataclass
+from datetime import datetime
 
 import numpy as np
 from scipy.stats import rankdata
@@ -21,7 +30,13 @@ from scipy.stats import rankdata
 from tevc import features
 from tevc.agent import RECUR
 from tevc.baselines import config_from_dict
+from tevc.datasets import DATASETS, make_windows
 from tevc.evaluator import RecipeEvaluator
+from tevc.reliability import merge
+from tevc.run_gate1 import OUT as GATE1_FILE
+from tevc.run_gate1 import TASKS as GATE1_TASKS
+from tevc.run_stream import OUT_DIR, STREAMS
+from tevc.stream import Environment, Stream, assert_disjoint
 
 FAULT_TARGET = {"OR": "BPFO", "IR": "BPFI", "RE": "BSF"}
 SIGNATURES = {"jnu": (set(), {"IR"}, {"OR"}, {"RE"}),          # normal, inner race, outer race, roller
@@ -30,6 +45,15 @@ RULES, AGGREGATIONS, CORRELATIONS = ("V1", "V3", "V2"), ("A-full", "A-max"), ("s
 TOP_IM = 5
 CONSTANT = 1e-6         # a claim whose range is below this is constant (float32 probabilities)
 PU_MIN_GAIN, PU_MIN_WINS, JNU_MAX_LOSS = 0.005, 7, 0.0025
+SPEC = "docs/superpowers/specs/2026-10-13-ress-rpst-pcs-design.md"
+DATASET_ORDER = ("pu", "jnu")
+# Selection archives (spec §4). PU's BO and WARM-TRANSFER come from stream_pu_baselines (10 runs), which supersedes
+# the partial stream_pu_extra. ORACLE-FITNESS is excluded: its fitness is test accuracy.
+SELECTION_FILES = {"pu": ("stream_pu_r10.json", "stream_pu_baselines.json", "stream_pu_rbase.json"),
+                   "jnu": ("stream_jnu_r10.json", "stream_jnu_extra.json", "stream_jnu_rbase.json")}
+SELECTION_METHODS = ("RANDOM", "GA-RESTART", "BO", "WARM-TRANSFER", "DANN", "DEEP-CORAL", "CDAN", "SHOT")
+GATE_FILES = {"pu": "stream_pu_v2.json", "jnu": "stream_jnu_v2.json"}
+VARIANT_OUT, GATE_OUT = OUT_DIR / "pcs_variant.json", OUT_DIR / "pcs_gate.json"
 _ENVELOPE = features.feature_names().index("env_full_f_sx1")     # first column of the envelope block
 
 
@@ -182,3 +206,127 @@ def replay(entries, envs, pick):
         deployed.append((entry["d"], cands[pick(env, cands)]))
         out.append(deployed[-1][1])
     return out
+
+
+def gate1_stream(ds_name, src, tgt):
+    """A Gate-1 task (tevc.run_gate1) as a one-environment stream: its library, A windows as U, B windows as T."""
+    ds = DATASETS[ds_name]
+    lib_entries = ds.entries("library", src)
+    env = Environment(f"{ds_name}@{tgt}", float(tgt), make_windows(ds.entries("A", tgt), ds.win, ds.hop, ds.cap_eval),
+                      make_windows(ds.entries("B", tgt), ds.win, ds.hop, ds.cap_eval))
+    stream = Stream(ds, lib_entries, make_windows(lib_entries, ds.win, ds.hop, ds.cap_fit), float(src), (env,))
+    assert_disjoint(stream)
+    return stream
+
+
+def selection_visits(ds_name):
+    """[(scorer, environment, candidates)]: every candidate set evaluated in one dataset's selection archives, plus
+    its Gate-1 tasks, whose models are trained here when not cached (Gate-1 never cached its predictions)."""
+    stream = STREAMS[ds_name]()
+    scorer = Scorer(stream)
+    results, _ = merge([OUT_DIR / f for f in SELECTION_FILES[ds_name]])
+    visits = []
+    for m in SELECTION_METHODS:
+        for envs in results[m].values():
+            for env, entry in zip(stream.environments, envs, strict=True):
+                if entry["env"] != env.name or entry["n_carried"]:
+                    raise ValueError(f"{m}: unexpected archive entry at {env.name}")
+                cands = entry["trials"]
+                if not same_model(cands[scorer.pick(env, cands, "IM")], entry["deployed"]):
+                    raise ValueError(f"{m} {env.name}: the IM rule does not reproduce the archived deployment")
+                visits.append((scorer, env, cands))
+    rows = json.loads(GATE1_FILE.read_text())["rows"]
+    for ds, src, tgt in GATE1_TASKS:
+        if ds != ds_name:
+            continue
+        g = Scorer(gate1_stream(ds, src, tgt))
+        (env,) = g.stream.environments
+        cands = [{**r["recipe"], "seed": r["seed"],
+                  "fitness": g.evaluator.evaluate(env, config_from_dict(r["recipe"]), r["seed"]).fitness}
+                 for r in rows if r["task"] == f"{ds}:{src}->{tgt}"]
+        print(f"Gate-1 {ds}:{src}->{tgt}: {len(cands)} models ready", flush=True)
+        visits.append((g, env, cands))
+    return visits
+
+
+def rule_accuracy(visits, rule, aggregation=None, correlation=None):
+    """Mean true accuracy over visits of the model the rule deploys from each visit's candidates."""
+    return float(np.mean([s.stats(env, c[s.pick(env, c, rule, aggregation, correlation)])[0]
+                          for s, env, c in visits]))
+
+
+def _stamp():
+    return datetime.now().isoformat(timespec="seconds")
+
+
+def select():
+    if GATE_OUT.exists():
+        raise SystemExit(f"{GATE_OUT} exists: the gate is one shot, so the variant can no longer change (spec §4)")
+    visits = {ds: selection_visits(ds) for ds in DATASET_ORDER}
+
+    def row(rule, aggregation=None, correlation=None):
+        acc = {ds: rule_accuracy(v, rule, aggregation, correlation) for ds, v in visits.items()}
+        return {**acc, "criterion": float(np.mean(list(acc.values())))}
+
+    table = {v: row(v.rule, v.aggregation, v.correlation) for v in VARIANTS}
+    chosen = best_variant({v: r["criterion"] for v, r in table.items()})
+    out = {"spec": f"{SPEC} §4 (variant selection)", "time": _stamp(), "files": SELECTION_FILES,
+           "gate1_file": str(GATE1_FILE), "methods": SELECTION_METHODS,
+           "n_visits": {ds: len(v) for ds, v in visits.items()},
+           "n_candidates": {ds: sum(len(c) for _, _, c in v) for ds, v in visits.items()},
+           "criterion": "mean over datasets of the mean deployed accuracy over visits",
+           "im_rule": row("IM"), "variants": [{**asdict(v), **r} for v, r in table.items()], "chosen": asdict(chosen)}
+    VARIANT_OUT.write_text(json.dumps(out, indent=1))
+    print(f"IM rule                  pu {out['im_rule']['pu'] * 100:6.2f}  jnu {out['im_rule']['jnu'] * 100:6.2f}")
+    for v, r in table.items():
+        print(f"{v.rule} {v.aggregation:6s} {v.correlation:8s} pu {r['pu'] * 100:6.2f}  jnu {r['jnu'] * 100:6.2f}  "
+              f"criterion {r['criterion'] * 100:6.2f}{'  <- chosen' if v == chosen else ''}")
+
+
+def gate():
+    if GATE_OUT.exists():
+        raise SystemExit(f"{GATE_OUT} exists: the gate is one shot (spec §4)")
+    if not VARIANT_OUT.exists():
+        raise SystemExit(f"{VARIANT_OUT} missing: run `python -m tevc.pcs select` and commit it first")
+    v = Variant(**json.loads(VARIANT_OUT.read_text())["chosen"])
+    out = {"spec": f"{SPEC} §4 (one-shot gate)", "time": _stamp(), "variant": asdict(v),
+           "variant_file": str(VARIANT_OUT), "files": GATE_FILES, "method": "AGENT", "datasets": {}}
+    gains = {}
+    for ds in DATASET_ORDER:
+        stream = STREAMS[ds]()
+        scorer, envs = Scorer(stream), stream.environments
+        runs = json.loads((OUT_DIR / GATE_FILES[ds]).read_text())["results"]["AGENT"]
+        per_run = {}
+        for r, entries in runs.items():
+            im = replay(entries, envs, lambda env, c: scorer.pick(env, c, "IM"))
+            for env, chosen, entry in zip(envs, im, entries):
+                if (not same_model(chosen, entry["deployed"])
+                        or abs(scorer.stats(env, chosen)[0] - entry["deployed_acc"]) > 1e-9):
+                    raise ValueError(f"{ds} run {r} {env.name}: the IM replay does not reproduce the archive")
+            pc = replay(entries, envs, lambda env, c: scorer.pick(env, c, v.rule, v.aggregation, v.correlation))
+            a_im = float(np.mean([scorer.stats(env, c)[0] for env, c in zip(envs, im)]))
+            a_pc = float(np.mean([scorer.stats(env, c)[0] for env, c in zip(envs, pc)]))
+            per_run[r] = {"im": a_im, "pcs": a_pc, "gain": a_pc - a_im,
+                          "changed_deployments": int(sum(not same_model(a, b) for a, b in zip(im, pc)))}
+        gains[ds] = [x["gain"] for x in per_run.values()]
+        out["datasets"][ds] = {"runs": per_run, "mean_im": float(np.mean([x["im"] for x in per_run.values()])),
+                               "mean_pcs": float(np.mean([x["pcs"] for x in per_run.values()])),
+                               "mean_gain": float(np.mean(gains[ds])),
+                               "runs_gained": int(sum(g > 0 for g in gains[ds])),
+                               "runs_lost": int(sum(g < 0 for g in gains[ds]))}
+        d = out["datasets"][ds]
+        print(f"{ds}: IM {d['mean_im'] * 100:6.2f}  PCS {d['mean_pcs'] * 100:6.2f}  "
+              f"gain {d['mean_gain'] * 100:+6.2f} pp  runs gained/lost {d['runs_gained']}/{d['runs_lost']}")
+    out["verdict"] = gate_verdict(gains["pu"], gains["jnu"])
+    GATE_OUT.write_text(json.dumps(out, indent=1))
+    print("verdict:", out["verdict"])
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("step", choices=("select", "gate"))
+    {"select": select, "gate": gate}[ap.parse_args().step]()
+
+
+if __name__ == "__main__":
+    main()

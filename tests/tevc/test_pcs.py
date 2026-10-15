@@ -3,12 +3,14 @@ from dataclasses import asdict
 import numpy as np
 import pytest
 
+import tevc.pcs as pcs_module
 from tevc.datasets import PU
+from tevc.evaluator import _fingerprint
 from tevc.features import compute_fault_frequencies
 from tevc.pcs import (AGGREGATIONS, CORRELATIONS, SIGNATURES, VARIANTS, Scorer, Variant, best_variant, choose,
-                      claims, evidence, gate_verdict, pcs, replay, same_model, weighted_corr)
+                      claims, evidence, gate1_stream, gate_verdict, pcs, replay, same_model, weighted_corr)
 from tevc.recipe import Recipe
-from tevc.stream import Environment, Stream
+from tevc.stream import Environment, Stream, pu_stream
 
 RNG = np.random.default_rng(0)
 
@@ -175,3 +177,22 @@ def test_replay_refuses_an_archive_it_cannot_reconstruct():
 def test_same_model_compares_configuration_and_seed_only():
     assert same_model(_trial(1, 0.9), {**_trial(1, 0.2), "acc": 0.5})
     assert not same_model(_trial(1, 0.9), _trial(2, 0.9))
+
+
+def test_gate1_pu_task_is_the_pu_streams_first_environment():
+    g, s = gate1_stream("pu", 900, 1500), pu_stream()
+    (ge,), se = g.environments, s.environments[0]
+    assert ge.name == se.name and g.library_rpm == s.library_rpm
+    assert _fingerprint(g.library, ge.U, ge.T) == _fingerprint(s.library, se.U, se.T)      # same cache entries
+
+
+def test_gate_is_one_shot_and_needs_the_frozen_variant(tmp_path, monkeypatch):
+    monkeypatch.setattr(pcs_module, "VARIANT_OUT", tmp_path / "pcs_variant.json")
+    monkeypatch.setattr(pcs_module, "GATE_OUT", tmp_path / "pcs_gate.json")
+    with pytest.raises(SystemExit, match="select"):
+        pcs_module.gate()
+    (tmp_path / "pcs_gate.json").write_text("{}")
+    with pytest.raises(SystemExit, match="one shot"):
+        pcs_module.gate()
+    with pytest.raises(SystemExit, match="one shot"):
+        pcs_module.select()                          # the variant cannot change after the gate
