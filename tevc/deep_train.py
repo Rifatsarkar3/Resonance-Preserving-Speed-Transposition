@@ -34,7 +34,7 @@ def _logits(model, x):
     return out[0] if isinstance(out, tuple) else out
 
 
-def train_cnn(W, y, model_name="WDCNN", epochs=30, seed=42, batch_size=32, lr=1e-3):
+def train_cnn(W, y, model_name="WDCNN", epochs=30, seed=42, batch_size=32, lr=1e-3, label_smoothing=0.0):
     set_all_seeds(seed)
     model = MODELS[model_name](signal_length=W.shape[1], n_classes=int(y.max()) + 1, dropout=0.3).to(DEVICE)
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
@@ -46,7 +46,7 @@ def train_cnn(W, y, model_name="WDCNN", epochs=30, seed=42, batch_size=32, lr=1e
         for idx in torch.randperm(len(X), generator=g).split(batch_size):
             idx = idx.to(DEVICE)
             opt.zero_grad()
-            loss = F.cross_entropy(_logits(model, X[idx]), Y[idx])
+            loss = F.cross_entropy(_logits(model, X[idx]), Y[idx], label_smoothing=label_smoothing)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             opt.step()
