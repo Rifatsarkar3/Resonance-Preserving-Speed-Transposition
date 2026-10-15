@@ -5,7 +5,7 @@ import torch
 from tevc.deep_train import predict, train_cnn
 from tevc.models import TICNN
 from tevc.uda import (centroid_labels, coral, entropy_weights, features_and_logits, grad_reverse, grl_coefficient,
-                      multilinear)
+                      multilinear, train_shot, train_source, train_uda)
 
 L = 256
 
@@ -60,3 +60,26 @@ def test_centroid_pseudo_labels_follow_the_feature_clusters_not_the_noisy_predic
     p[:3], p[10:13] = torch.tensor([0.9, 0.1]), torch.tensor([0.1, 0.9])
     labels = centroid_labels(f, p)
     assert (labels[:10] == labels[0]).all() and (labels[10:] == labels[10]).all() and labels[0] != labels[10]
+
+
+@pytest.mark.parametrize("method", ["DANN", "DEEP-CORAL", "CDAN"])
+def test_uda_training_is_seeded_and_returns_a_working_classifier(method):
+    (Ws, ys), (Wt, _) = _data(), _data(seed=1)
+    a = predict(train_uda(Ws, ys, Wt, method, 1.0, 1e-3, epochs=1, seed=5), Wt)
+    b = predict(train_uda(Ws, ys, Wt, method, 1.0, 1e-3, epochs=1, seed=5), Wt)
+    assert a.shape == (8, 2) and np.allclose(a.sum(axis=1), 1.0) and np.allclose(a, b)
+
+
+def test_uda_rejects_unknown_methods():
+    Ws, ys = _data()
+    with pytest.raises(ValueError):
+        train_uda(Ws, ys, Ws, "MMD", 1.0, 1e-3, epochs=1)
+
+
+def test_shot_adapts_the_features_but_keeps_the_source_classifier_head():
+    (Ws, ys), (Wt, _) = _data(), _data(seed=1)
+    source = train_source(Ws, ys, epochs=1, seed=5)
+    head, conv = source.fc2.weight.detach().clone(), source.conv_init[0].weight.detach().clone()
+    adapted = train_shot(Ws, ys, Wt, 1e-3, 0.3, epochs=2, seed=5, source=source)
+    assert torch.equal(adapted.fc2.weight, head) and torch.equal(source.conv_init[0].weight, conv)
+    assert not torch.equal(adapted.conv_init[0].weight, conv)
