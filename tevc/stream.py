@@ -7,6 +7,7 @@ from typing import Callable, Optional
 import numpy as np
 
 from tevc.datasets import JNU, PU, make_windows
+from tevc.dirg_data import DIRG, estimate_speed_hz
 from tevc.ottawa_data import OTTAWA
 
 JNU_LIBRARY_CAP = 40      # first half of a 600-rpm fault recording yields ~40 windows: keep classes balanced
@@ -14,6 +15,8 @@ OTTAWA_LIBRARY_BIN = (13.0, 16.0)
 # Trial 2 has almost no outer-race data above 25 Hz (2 windows), so the stream tops out at 22-25 Hz (user, 2026-10-08)
 OTTAWA_SEQUENCE = ((16.0, 19.0), (19.0, 22.0), (22.0, 25.0), (19.0, 22.0), (16.0, 19.0))
 MIN_PER_CLASS = 10
+DIRG_LIBRARY_HZ = 300
+DIRG_SEQUENCE = (400, 500, 400, 200, 100)      # nominal Hz; every ratio to the library is >= 1.3 or <= 1 / 1.3
 
 
 @dataclass(frozen=True, eq=False)
@@ -76,6 +79,20 @@ def ottawa_stream(library_bin=OTTAWA_LIBRARY_BIN, sequence=OTTAWA_SEQUENCE):
                               _windows(OTTAWA, OTTAWA.entries(3, b), OTTAWA.cap_eval))
     return Stream(OTTAWA, lib_entries, library, _median_rpm(library), tuple(envs[b] for b in sequence),
                   src_rpm_of=OTTAWA.chunk_rpm)
+
+
+def dirg_stream(library_hz=DIRG_LIBRARY_HZ, sequence=DIRG_SEQUENCE):
+    """RESS spec §5.4: library = the whole library-speed records; U = first 5 s, T = last 5 s of each target record.
+    No tachometer: speeds (rpm) are estimated label-free from the library windows and from each U buffer."""
+    lib_entries = DIRG.entries("library", library_hz)
+    library = _windows(DIRG, lib_entries, DIRG.cap_fit)
+    envs = {}
+    for hz in dict.fromkeys(sequence):
+        U = _windows(DIRG, DIRG.entries("U", hz), DIRG.cap_eval)
+        envs[hz] = Environment(f"dirg@{hz}Hz", 60.0 * estimate_speed_hz(U["W"], DIRG.fs, hz), U,
+                               _windows(DIRG, DIRG.entries("T", hz), DIRG.cap_eval))
+    return Stream(DIRG, lib_entries, library, 60.0 * estimate_speed_hz(library["W"], DIRG.fs, library_hz),
+                  tuple(envs[h] for h in sequence))
 
 
 def _intervals(w):
