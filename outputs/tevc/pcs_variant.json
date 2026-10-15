@@ -1,0 +1,144 @@
+{
+ "spec": "docs/superpowers/specs/2026-10-13-ress-rpst-pcs-design.md \u00a74 (variant selection)",
+ "time": "2026-10-15T22:24:43",
+ "files": {
+  "pu": [
+   "stream_pu_r10.json",
+   "stream_pu_baselines.json",
+   "stream_pu_rbase.json"
+  ],
+  "jnu": [
+   "stream_jnu_r10.json",
+   "stream_jnu_extra.json",
+   "stream_jnu_rbase.json"
+  ]
+ },
+ "gate1_file": "outputs\\tevc\\gate1_results.json",
+ "methods": [
+  "RANDOM",
+  "GA-RESTART",
+  "BO",
+  "WARM-TRANSFER",
+  "DANN",
+  "DEEP-CORAL",
+  "CDAN",
+  "SHOT"
+ ],
+ "n_visits": {
+  "pu": 242,
+  "jnu": 321
+ },
+ "n_candidates": {
+  "pu": 7280,
+  "jnu": 9640
+ },
+ "criterion": "mean over datasets of the mean deployed accuracy over visits",
+ "im_rule": {
+  "pu": 0.7568181818181817,
+  "jnu": 0.997458208883322,
+  "criterion": 0.8771381953507519
+ },
+ "variants": [
+  {
+   "rule": "V1",
+   "aggregation": "A-full",
+   "correlation": "spearman",
+   "pu": 0.7310046487603306,
+   "jnu": 0.8553023733821499,
+   "criterion": 0.7931535110712402
+  },
+  {
+   "rule": "V1",
+   "aggregation": "A-full",
+   "correlation": "pearson",
+   "pu": 0.7444989669421487,
+   "jnu": 0.8007171933712303,
+   "criterion": 0.7726080801566895
+  },
+  {
+   "rule": "V1",
+   "aggregation": "A-max",
+   "correlation": "spearman",
+   "pu": 0.7275051652892561,
+   "jnu": 0.8469226723833381,
+   "criterion": 0.7872139188362971
+  },
+  {
+   "rule": "V1",
+   "aggregation": "A-max",
+   "correlation": "pearson",
+   "pu": 0.7477789256198346,
+   "jnu": 0.7775977936217362,
+   "criterion": 0.7626883596207854
+  },
+  {
+   "rule": "V3",
+   "aggregation": "A-full",
+   "correlation": "spearman",
+   "pu": 0.7645144628099173,
+   "jnu": 0.99330619520185,
+   "criterion": 0.8789103290058837
+  },
+  {
+   "rule": "V3",
+   "aggregation": "A-full",
+   "correlation": "pearson",
+   "pu": 0.7678719008264462,
+   "jnu": 0.9907176349680445,
+   "criterion": 0.8792947678972454
+  },
+  {
+   "rule": "V3",
+   "aggregation": "A-max",
+   "correlation": "spearman",
+   "pu": 0.7624354338842975,
+   "jnu": 0.9934725969104281,
+   "criterion": 0.8779540153973628
+  },
+  {
+   "rule": "V3",
+   "aggregation": "A-max",
+   "correlation": "pearson",
+   "pu": 0.7719008264462809,
+   "jnu": 0.9903214021903202,
+   "criterion": 0.8811111143183006
+  },
+  {
+   "rule": "V2",
+   "aggregation": "A-full",
+   "correlation": "spearman",
+   "pu": 0.7647081611570248,
+   "jnu": 0.9918916803160228,
+   "criterion": 0.8782999207365239
+  },
+  {
+   "rule": "V2",
+   "aggregation": "A-full",
+   "correlation": "pearson",
+   "pu": 0.7693569214876033,
+   "jnu": 0.9732761666184925,
+   "criterion": 0.8713165440530479
+  },
+  {
+   "rule": "V2",
+   "aggregation": "A-max",
+   "correlation": "spearman",
+   "pu": 0.7615960743801652,
+   "jnu": 0.992091201785657,
+   "criterion": 0.8768436380829111
+  },
+  {
+   "rule": "V2",
+   "aggregation": "A-max",
+   "correlation": "pearson",
+   "pu": 0.7666967975206611,
+   "jnu": 0.9718002296303433,
+   "criterion": 0.8692485135755021
+  }
+ ],
+ "chosen": {
+  "rule": "V3",
+  "aggregation": "A-max",
+  "correlation": "pearson"
+ }
+}
