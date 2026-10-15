@@ -134,3 +134,68 @@ def dsr_training_set(config, W, y, seed):
             sims.append(dsr_simulate(x, r, l, rng.normal(0.0, np.sqrt(config.var_e), int(np.ceil(len(x) / r)) - 1)))
             labels.append(label)
     return np.concatenate([Z, np.stack(sims)]), np.concatenate([y, np.asarray(labels, dtype=y.dtype)])
+
+
+def cot_library(stream):
+    """Library windows on the library's angular sampling: an entry recorded at another speed (Ottawa chunks,
+    src_rpm_of) is resampled to library_rpm before windowing; JNU and PU entries are at library speed already."""
+    if stream.src_rpm_of is None:
+        return stream.library["W"], stream.library["y"]
+    ds = stream.dataset
+
+    def to_library_speed(label, rec, sig):
+        s0 = stream.src_rpm_of(rec)
+        return synthesis.resample(sig, s0, stream.library_rpm), stream.library_rpm / s0
+
+    w = make_windows(stream.library_entries, ds.win, ds.hop, ds.cap_fit, synth=to_library_speed)
+    return w["W"], w["y"]
+
+
+def _identity(W):
+    return W
+
+
+def view(config, stream, env):
+    """Window transform before prediction: COT stretches target windows by env speed / library speed onto the
+    library's angular sampling (every frequency moves, resonances included); other methods see windows unchanged."""
+    if not isinstance(config, COTConfig):
+        return _identity
+    return lambda W: np.stack([synthesis.resample(w, env.rpm, stream.library_rpm) for w in W])
+
+
+_MODELS = OrderedDict()
+
+
+def _memo(key, build):
+    if key not in _MODELS:
+        _MODELS[key] = build()
+        if len(_MODELS) > MAX_MODELS:
+            _MODELS.popitem(last=False)
+    _MODELS.move_to_end(key)
+    return _MODELS[key]
+
+
+def _library_key(stream):
+    h = hashlib.sha1(np.ascontiguousarray(stream.library["W"]).tobytes())
+    h.update(np.asarray(stream.library["y"]).tobytes())
+    return h.hexdigest()[:16]
+
+
+def train(config, stream, env, seed, model_name, epochs):
+    """(trained model, library windows) for one candidate; RecipeEvaluator calls it for non-recipe candidates.
+    DSR, COT and SHOT's source model do not depend on the environment: trained once and reused (memo)."""
+    lib, key = stream.library, (_library_key(stream), seed, model_name, epochs)
+    if isinstance(config, DSRConfig):
+        return _memo(("DSR", config) + key,
+                     lambda: train_cnn(*dsr_training_set(config, lib["W"], lib["y"], seed), model_name, epochs,
+                                       seed)), lib["W"]
+    if isinstance(config, COTConfig):
+        return _memo(("COT",) + key, lambda: train_cnn(*cot_library(stream), model_name, epochs, seed)), lib["W"]
+    if isinstance(config, UDAConfig):
+        return uda.train_uda(lib["W"], lib["y"], env.U["W"], config.method, config.weight, config.lr, model_name,
+                             epochs, seed), lib["W"]
+    if isinstance(config, SHOTConfig):
+        source = _memo(("SHOT-source",) + key, lambda: uda.train_source(lib["W"], lib["y"], model_name, epochs, seed))
+        return uda.train_shot(lib["W"], lib["y"], env.U["W"], config.lr, config.beta, model_name, epochs, seed,
+                              source=source), lib["W"]
+    raise TypeError(f"not a baseline configuration: {config!r}")
