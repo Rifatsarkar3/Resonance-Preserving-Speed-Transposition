@@ -2,6 +2,7 @@
 
     python -m tevc.run_stream --dataset jnu             # development stream, all methods, 5 independent runs
     python -m tevc.run_stream --dataset pu --runs 1     # first run only
+    python -m tevc.run_stream --dataset pu --methods DSR,COT,DANN,DEEP-CORAL,CDAN,SHOT --tag rbase   # RESS baselines
 Writes outputs/tevc/stream_<dataset>.json after every (run, method), so partial results are readable early.
 Methods see only the agent-visible fitness; true accuracy (evaluator.true_accuracy) is used here, for scoring only.
 Ottawa is the confirmatory set: it runs only through the frozen protocol in tevc.confirmatory.
@@ -15,6 +16,7 @@ from pathlib import Path
 
 import numpy as np
 
+from tevc import baselines
 from tevc.agent import Agent
 from tevc.evaluator import Evaluation, RecipeEvaluator
 from tevc.optimizers import B, N_GENES, N_INIT, Trial, bo_search, encode, ga_search, random_search
@@ -24,7 +26,7 @@ from tevc.stream import assert_disjoint, jnu_stream, ottawa_stream, pu_stream
 STREAMS = {"jnu": jnu_stream, "pu": pu_stream, "ottawa": ottawa_stream}
 METHODS = ("STATIC-NONE", "STATIC-H2", "RANDOM", "GA-RESTART", "AGENT", "AGENT-B1")
 EXTRA = ("BO", "WARM-TRANSFER", "ORACLE-FITNESS", "AGENT-NOMEM", "AGENT-NOSURR", "AGENT-NOEVO", "AGENT-NOPRIOR",
-         "AGENT-DFID")
+         "AGENT-DFID") + baselines.METHODS
 AGENT_VARIANTS = {"AGENT": {}, "AGENT-B1": {"beta": 1.0}, "AGENT-NOMEM": {"memory": False},
                   "AGENT-NOSURR": {"surrogate": False}, "AGENT-NOEVO": {"evolve": False},
                   "AGENT-NOPRIOR": {"prior": False}, "AGENT-DFID": {}}
@@ -96,6 +98,8 @@ def run_method(method, stream, evaluator, run_seed):
             past += [(d, encode(t.recipe), t.fitness) for t in trials]
             previous = trials
             out.append(([], trials))
+        elif method in baselines.METHODS:
+            out.append(([], baselines.search(method, evaluator, env, run_seed)))
         else:
             fitness = DFIDEvaluator(evaluator) if method == "AGENT-DFID" else evaluator
             out.append(agent.handle(fitness, env, init_rng, op_rng))

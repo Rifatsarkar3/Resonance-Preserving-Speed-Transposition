@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from tevc import baselines
 from tevc.agent import PRIOR
 from tevc.optimizers import Trial
 from tevc.recipe import Recipe
@@ -72,8 +73,19 @@ def test_report_lists_only_the_runs_done():
 
 
 def test_every_search_spends_the_budget_per_change(fake_evaluator):
-    for m in ("RANDOM", "GA-RESTART", "BO", "WARM-TRANSFER", "ORACLE-FITNESS", *AGENT_VARIANTS):
+    for m in ("RANDOM", "GA-RESTART", "BO", "WARM-TRANSFER", "ORACLE-FITNESS", *AGENT_VARIANTS, *baselines.METHODS):
         assert [len(trials) for _, trials in run_method(m, STREAM, fake_evaluator, 7)] == [30, 30, 30]
+
+
+def test_baselines_offer_the_same_candidates_in_every_environment(fake_evaluator):
+    for m in baselines.METHODS:
+        per_env = [[(t.recipe, t.seed) for t in trials] for _, trials in run_method(m, STREAM, fake_evaluator, 7)]
+        assert per_env[0] == per_env[1] == per_env[2]
+
+
+def test_score_records_baseline_candidates_with_their_kind(fake_evaluator):
+    s = score(fake_evaluator, STREAM, E800, [], run_method("SHOT", STREAM, fake_evaluator, 7)[0][1])
+    assert s["deployed"]["kind"] == "SHOT" and s["n_evals"] == 30
 
 
 def test_ottawa_runs_only_through_the_frozen_protocol(monkeypatch):
