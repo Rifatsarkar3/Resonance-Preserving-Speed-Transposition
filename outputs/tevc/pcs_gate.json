@@ -1,0 +1,161 @@
+{
+ "spec": "docs/superpowers/specs/2026-10-13-ress-rpst-pcs-design.md \u00a74 (one-shot gate)",
+ "time": "2026-10-15T22:25:13",
+ "variant": {
+  "rule": "V3",
+  "aggregation": "A-max",
+  "correlation": "pearson"
+ },
+ "variant_file": "outputs\\tevc\\pcs_variant.json",
+ "files": {
+  "pu": "stream_pu_v2.json",
+  "jnu": "stream_jnu_v2.json"
+ },
+ "method": "AGENT",
+ "datasets": {
+  "pu": {
+   "runs": {
+    "42": {
+     "im": 0.7999999999999999,
+     "pcs": 0.8114583333333334,
+     "gain": 0.01145833333333346,
+     "changed_deployments": 1
+    },
+    "1337": {
+     "im": 0.7614583333333332,
+     "pcs": 0.7208333333333333,
+     "gain": -0.04062499999999991,
+     "changed_deployments": 2
+    },
+    "2025": {
+     "im": 0.7791666666666667,
+     "pcs": 0.790625,
+     "gain": 0.011458333333333348,
+     "changed_deployments": 1
+    },
+    "999": {
+     "im": 0.84375,
+     "pcs": 0.84375,
+     "gain": 0.0,
+     "changed_deployments": 1
+    },
+    "7": {
+     "im": 0.8072916666666666,
+     "pcs": 0.8072916666666666,
+     "gain": 0.0,
+     "changed_deployments": 0
+    },
+    "3": {
+     "im": 0.7979166666666666,
+     "pcs": 0.8145833333333333,
+     "gain": 0.01666666666666672,
+     "changed_deployments": 2
+    },
+    "11": {
+     "im": 0.8135416666666666,
+     "pcs": 0.8083333333333332,
+     "gain": -0.00520833333333337,
+     "changed_deployments": 1
+    },
+    "101": {
+     "im": 0.796875,
+     "pcs": 0.7687499999999999,
+     "gain": -0.028125000000000067,
+     "changed_deployments": 2
+    },
+    "2718": {
+     "im": 0.7374999999999999,
+     "pcs": 0.7385416666666668,
+     "gain": 0.0010416666666668295,
+     "changed_deployments": 1
+    },
+    "31415": {
+     "im": 0.8083333333333332,
+     "pcs": 0.8406250000000001,
+     "gain": 0.03229166666666683,
+     "changed_deployments": 2
+    }
+   },
+   "mean_im": 0.7945833333333334,
+   "mean_pcs": 0.7944791666666666,
+   "mean_gain": -0.00010416666666661634,
+   "runs_gained": 5,
+   "runs_lost": 3
+  },
+  "jnu": {
+   "runs": {
+    "42": {
+     "im": 1.0,
+     "pcs": 1.0,
+     "gain": 0.0,
+     "changed_deployments": 1
+    },
+    "1337": {
+     "im": 0.9953125,
+     "pcs": 0.9828125,
+     "gain": -0.012500000000000067,
+     "changed_deployments": 2
+    },
+    "2025": {
+     "im": 0.9984375,
+     "pcs": 0.9875,
+     "gain": -0.010937499999999933,
+     "changed_deployments": 4
+    },
+    "999": {
+     "im": 1.0,
+     "pcs": 0.9875,
+     "gain": -0.012499999999999956,
+     "changed_deployments": 2
+    },
+    "7": {
+     "im": 1.0,
+     "pcs": 1.0,
+     "gain": 0.0,
+     "changed_deployments": 2
+    },
+    "3": {
+     "im": 1.0,
+     "pcs": 0.990625,
+     "gain": -0.009375000000000022,
+     "changed_deployments": 3
+    },
+    "11": {
+     "im": 1.0,
+     "pcs": 0.9984375,
+     "gain": -0.0015625000000000222,
+     "changed_deployments": 3
+    },
+    "101": {
+     "im": 0.9984375,
+     "pcs": 0.9921875,
+     "gain": -0.006249999999999978,
+     "changed_deployments": 2
+    },
+    "2718": {
+     "im": 1.0,
+     "pcs": 0.99375,
+     "gain": -0.006249999999999978,
+     "changed_deployments": 4
+    },
+    "31415": {
+     "im": 1.0,
+     "pcs": 1.0,
+     "gain": 0.0,
+     "changed_deployments": 2
+    }
+   },
+   "mean_im": 0.99921875,
+   "mean_pcs": 0.9932812500000001,
+   "mean_gain": -0.005937499999999996,
+   "runs_gained": 0,
+   "runs_lost": 7
+  }
+ },
+ "verdict": {
+  "pu_mean_gain": false,
+  "pu_runs_gained": false,
+  "jnu_mean_loss": false,
+  "pass": false
+ }
+}
