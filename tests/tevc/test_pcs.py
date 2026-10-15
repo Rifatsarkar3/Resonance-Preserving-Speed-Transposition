@@ -1,7 +1,13 @@
+from dataclasses import asdict
+
 import numpy as np
 
-from tevc.pcs import (SIGNATURES, VARIANTS, Variant, best_variant, choose, claims, gate_verdict, pcs,
-                      weighted_corr)
+from tevc.datasets import PU
+from tevc.features import compute_fault_frequencies
+from tevc.pcs import (AGGREGATIONS, CORRELATIONS, SIGNATURES, VARIANTS, Scorer, Variant, best_variant, choose,
+                      claims, evidence, gate_verdict, pcs, weighted_corr)
+from tevc.recipe import Recipe
+from tevc.stream import Environment, Stream
 
 RNG = np.random.default_rng(0)
 
@@ -69,3 +75,61 @@ def test_gate_verdict_thresholds():
     assert not gate_verdict([0.01] * 6 + [-0.001] * 4, [0.0] * 4)["pass"]           # 6 of 10 runs
     assert not gate_verdict([0.004] * 10, [0.0] * 4)["pass"]                        # mean gain below 0.5 pp
     assert not gate_verdict(seven_wins, [-0.003] * 4)["pass"]                       # JNU loses 0.3 pp
+
+
+def _z(x):
+    x = np.asarray(x, dtype=float)
+    return (x - x.mean()) / x.std()
+
+
+def test_evidence_averages_harmonics_then_takes_the_full_band_or_the_best_band():
+    block = np.zeros((3, 9, 4, 3))                   # windows, bands (0 = full), (f_s, BPFO, BPFI, BSF), harmonics
+    block[:, 0, 1, :] = [[1, 2, 3], [0, 0, 0], [2, 2, 2]]
+    block[1, 5, 1, :] = 9.0                          # window 1: BPFO stands out in one narrow band only
+    full, best = evidence(block, "A-full"), evidence(block, "A-max")
+    assert set(full) == {"OR", "IR", "RE"}
+    assert np.allclose(full["OR"], _z([2, 0, 2])) and np.allclose(best["OR"], _z([2, 9, 2]))
+    assert np.allclose(full["IR"], 0.0)
+
+
+def _bursts(rate, rng, fs=PU.fs, n=PU.win, resonance=3000.0):
+    """Decaying 3 kHz resonance excited at `rate` Hz (random phase), plus noise; rate 0 = noise only."""
+    t = np.arange(n) / fs
+    x = 0.3 * rng.normal(size=n)
+    if rate:
+        for t0 in np.arange(rng.uniform(0, 1 / rate), t[-1], 1 / rate):
+            m = t >= t0
+            x[m] += np.exp(-(t[m] - t0) / 1e-3) * np.sin(2 * np.pi * resonance * (t[m] - t0))
+    return x
+
+
+class _Cache:
+    """cached(): the probabilities registered for a seed, on U and on T alike; uniform buffer weights."""
+
+    def __init__(self, probs):
+        self.probs = probs
+
+    def cached(self, env, config, seed):
+        return self.probs[seed], self.probs[seed]
+
+    def weights(self, env):
+        return np.ones(len(env.U["W"]))
+
+
+def test_pcs_prefers_the_model_whose_fault_claims_match_the_envelope_physics():
+    f = compute_fault_frequencies(f_shaft_hz=1500 / 60, **PU.geometry)
+    y = np.repeat([0, 1, 2], [4, 6, 6])              # healthy, outer race (KA), inner race (KI)
+    rate = {0: 0.0, 1: f["BPFO"], 2: f["BPFI"]}
+    rng = np.random.default_rng(1)
+    W = np.stack([_bursts(rate[c], rng) for c in y])
+    env = Environment("pu@1500", 1500.0, {"W": W}, {"y": y})
+    scorer = Scorer(Stream(PU, [], {}, 900.0, (env,)),
+                    _Cache({1: _probs(y), 2: _probs(np.array([0, 2, 1])[y])}))   # seed 2 swaps OR and IR
+    cand = asdict(Recipe(0, 0.0, 0.0, 256, 0.0, 0, True))
+    (acc_good, good), (acc_bad, bad) = scorer.stats(env, {**cand, "seed": 1}), scorer.stats(env, {**cand, "seed": 2})
+    assert acc_good == 1.0 and acc_bad == 4 / 16
+    for a in AGGREGATIONS:
+        for c in CORRELATIONS:
+            assert good[(a, c)] > 0.5 and bad[(a, c)] < 0.0
+    cands = [{**cand, "seed": 2, "fitness": 0.9}, {**cand, "seed": 1, "fitness": 0.1}]
+    assert scorer.pick(env, cands, "IM") == 0 and scorer.pick(env, cands, "V1", "A-max", "pearson") == 1

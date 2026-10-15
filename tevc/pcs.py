@@ -18,6 +18,10 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.stats import rankdata
 
+from tevc import features
+from tevc.baselines import config_from_dict
+from tevc.evaluator import RecipeEvaluator
+
 FAULT_TARGET = {"OR": "BPFO", "IR": "BPFI", "RE": "BSF"}
 SIGNATURES = {"jnu": (set(), {"IR"}, {"OR"}, {"RE"}),          # normal, inner race, outer race, roller
               "pu": (set(), {"OR"}, {"IR"}, {"IR", "OR"})}      # healthy, KA, KI, KB (combined inner + outer damage)
@@ -25,6 +29,7 @@ RULES, AGGREGATIONS, CORRELATIONS = ("V1", "V3", "V2"), ("A-full", "A-max"), ("s
 TOP_IM = 5
 CONSTANT = 1e-6         # a claim whose range is below this is constant (float32 probabilities)
 PU_MIN_GAIN, PU_MIN_WINS, JNU_MAX_LOSS = 0.005, 7, 0.0025
+_ENVELOPE = features.feature_names().index("env_full_f_sx1")     # first column of the envelope block
 
 
 @dataclass(frozen=True)
@@ -35,6 +40,25 @@ class Variant:
 
 
 VARIANTS = tuple(Variant(r, a, c) for r in RULES for a in AGGREGATIONS for c in CORRELATIONS)    # tie-break order
+
+
+def envelope_block(W, fs, rpm, geometry):
+    """(windows, bands, targets, harmonics) envelope peak-to-floor log ratios of the z-normalised windows at shaft
+    speed rpm; band 0 = full band, targets = features.ORDER_TARGETS."""
+    X = features.extract(W, fs, rpm / 60.0, geometry, znorm=True)[:, _ENVELOPE:]
+    return X.reshape(len(X), 1 + features.N_ENV_BANDS, len(features.ORDER_TARGETS), len(features.HARMONICS))
+
+
+def evidence(block, aggregation):
+    """{fault type k: standardised evidence per window}: harmonic mean, then the full band (A-full) or the best
+    band (A-max)."""
+    per_band = block.mean(axis=3)
+    e = per_band[:, 0] if aggregation == "A-full" else per_band.max(axis=1)
+    out = {}
+    for k, target in FAULT_TARGET.items():
+        x = e[:, features.ORDER_TARGETS.index(target)].astype(np.float64)
+        out[k] = (x - x.mean()) / (x.std() + 1e-12)
+    return out
 
 
 def weighted_corr(x, y, w):
@@ -98,3 +122,37 @@ def gate_verdict(pu_gains, jnu_gains):
               "pu_runs_gained": bool((pu > 0).sum() >= PU_MIN_WINS),
               "jnu_mean_loss": bool(-jnu.mean() <= JNU_MAX_LOSS + 1e-12)}
     return {**checks, "pass": all(checks.values())}
+
+
+class Scorer:
+    """True test accuracy and PCS values of cached models on one stream's environments; never trains."""
+
+    def __init__(self, stream, evaluator=None):
+        self.stream, self.signatures = stream, SIGNATURES[stream.dataset.name]
+        self.evaluator = evaluator or RecipeEvaluator(stream)
+        self._evidence, self._stats = {}, {}
+
+    def evidence(self, env):
+        if env.name not in self._evidence:
+            ds = self.stream.dataset
+            block = envelope_block(env.U["W"], ds.fs, env.rpm, ds.geometry)
+            self._evidence[env.name] = {a: evidence(block, a) for a in AGGREGATIONS}
+        return self._evidence[env.name]
+
+    def stats(self, env, cand):
+        """(true test accuracy, {(aggregation, correlation): PCS}) of the cached model of a result-file entry."""
+        config, seed = config_from_dict(cand), int(cand["seed"])
+        key = (env.name, config, seed)
+        if key not in self._stats:
+            pU, pT = self.evaluator.cached(env, config, seed)
+            ev, w = self.evidence(env), self.evaluator.weights(env)
+            self._stats[key] = (float((pT.argmax(axis=1) == env.T["y"]).mean()),
+                                {(a, c): pcs(pU, ev[a], self.signatures, w, c)
+                                 for a in AGGREGATIONS for c in CORRELATIONS})
+        return self._stats[key]
+
+    def pick(self, env, cands, rule, aggregation=None, correlation=None):
+        """Index of the candidate the rule deploys; IM uses the archived agent-visible fitness."""
+        im = [c["fitness"] for c in cands]
+        score = im if rule == "IM" else [self.stats(env, c)[1][(aggregation, correlation)] for c in cands]
+        return choose(rule, im, score)
