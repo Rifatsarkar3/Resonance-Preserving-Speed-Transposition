@@ -3,7 +3,8 @@
 The agent receives only `Evaluation` (fitness = cluster-balanced IM on the environment's UNLABELLED buffer, plus
 cost). True accuracy on the environment's test set is for scoring only: `true_accuracy` (stream driver) and
 `hidden_log`, neither of which agent code reads. Predicted probabilities are cached on disk, so re-scoring never
-retrains.
+retrains. Non-recipe candidates (the RESS baselines, tevc.baselines) train through baseline_fn; view_fn transforms
+windows before prediction (COT only).
 """
 import hashlib
 import json
@@ -13,10 +14,10 @@ from pathlib import Path
 
 import numpy as np
 
-from tevc import features
+from tevc import baselines, features
 from tevc.deep_train import predict, train_cnn
 from tevc.proxies import cluster_balance_weights, information_maximization, neg_mmd2, weighted_information_maximization
-from tevc.recipe import training_set
+from tevc.recipe import Recipe, training_set
 
 
 def cluster_weights(env, ds):
@@ -43,12 +44,14 @@ def _fingerprint(*window_sets):
 
 class RecipeEvaluator:
     def __init__(self, stream, model_name="TICNN", epochs=40, cache_dir=Path("outputs/tevc/cache/evals"),
-                 train_fn=train_cnn, predict_fn=predict, weights_fn=None):
+                 train_fn=train_cnn, predict_fn=predict, weights_fn=None, baseline_fn=None, view_fn=None):
         self.stream, self.model_name, self.epochs = stream, model_name, epochs
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.train_fn, self.predict_fn = train_fn, predict_fn
         self.weights_fn = weights_fn or (lambda env: cluster_weights(env, stream.dataset))
+        self.baseline_fn = baseline_fn or baselines.train
+        self.view_fn = view_fn or baselines.view
         self._weights = {}
         self.hidden_log = []
 
@@ -74,12 +77,23 @@ class RecipeEvaluator:
             return z["pU"], z["pT"], float(z["cost_s"]), True
         t0 = time.time()
         model, _ = self._train(env, recipe, seed)
-        pU, pT = self.predict_fn(model, env.U["W"]), self.predict_fn(model, env.T["W"])
+        view = self.view_fn(recipe, self.stream, env)
+        pU, pT = self.predict_fn(model, view(env.U["W"])), self.predict_fn(model, view(env.T["W"]))
         cost = time.time() - t0
         np.savez(path, pU=pU, pT=pT, cost_s=cost)
         return pU, pT, cost, False
 
+    def cached(self, env, recipe, seed):
+        """(pU, pT) of a model already in the cache, never training (reliability re-scoring); KeyError if absent."""
+        path = self.cache_dir / f"{self._key(env, recipe, seed)}.npz"
+        if not path.exists():
+            raise KeyError(f"{env.name}: no cached model for {recipe} with seed {seed}")
+        with np.load(path) as z:
+            return z["pU"], z["pT"]
+
     def _train(self, env, recipe, seed):
+        if not isinstance(recipe, Recipe):
+            return self.baseline_fn(recipe, self.stream, env, seed, self.model_name, self.epochs)
         W, y = training_set(recipe, self.stream.dataset, self.stream.library_entries, self.stream.library,
                             self.stream.library_rpm, env.rpm, self.stream.src_rpm_of)
         return self.train_fn(W, y, self.model_name, self.epochs, seed), W
@@ -89,6 +103,8 @@ class RecipeEvaluator:
         between the model's embeddings of 400 of its training windows and of U. Embeddings are not in the model
         cache, so a cached model is retrained (seeded training is deterministic; the largest |ΔpU| against the cache
         is stored as pU_drift). The value is kept beside the model cache, which is never rewritten."""
+        if not isinstance(recipe, Recipe):
+            raise TypeError("DFID is defined for synthesis recipes only")
         key = self._key(env, recipe, seed)
         side = self.cache_dir / f"{key}.dfid.json"
         if side.exists():

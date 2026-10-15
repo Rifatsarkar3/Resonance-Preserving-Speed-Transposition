@@ -1,7 +1,9 @@
 from dataclasses import fields
 
 import numpy as np
+import pytest
 
+from tevc.baselines import COTConfig, SHOTConfig
 from tevc.evaluator import Evaluation, RecipeEvaluator
 from tevc.recipe import Recipe
 from tevc.stream import Environment, Stream
@@ -121,3 +123,46 @@ def test_dfid_of_a_cached_model_records_retraining_drift(tmp_path):
     ev.evaluate(env, RECIPE, 7)                                  # probabilities cached, no embeddings
     ev.dfid(env, RECIPE, 7)
     assert json.loads(next(tmp_path.glob("*.dfid.json")).read_text())["pU_drift"] == 0.0
+
+
+def _config_evaluator(tmp_path, trained, viewed):
+    def baseline_fn(config, stream, env, seed, model_name, epochs):
+        trained.append((config, seed))
+        return {"seed": seed}, None
+
+    def view_fn(config, stream, env):
+        viewed.append(config)
+        return lambda W: W
+
+    return RecipeEvaluator(_stream(), epochs=1, cache_dir=tmp_path, train_fn=_fake_train, predict_fn=_fake_predict,
+                           weights_fn=_uniform_weights, baseline_fn=baseline_fn, view_fn=view_fn)
+
+
+def test_baseline_candidates_train_through_their_hook_and_are_cached(tmp_path):
+    trained, viewed = [], []
+    ev = _config_evaluator(tmp_path, trained, viewed)
+    env = ev.stream.environments[0]
+    first, second = ev.evaluate(env, COTConfig(), 4), ev.evaluate(env, COTConfig(), 4)
+    assert not first.cached and second.cached and trained == [(COTConfig(), 4)] and viewed == [COTConfig()]
+
+
+def test_cache_keys_separate_baseline_kinds_and_recipes(tmp_path):
+    ev = _evaluator(tmp_path)
+    env = ev.stream.environments[0]
+    assert len({ev._key(env, c, 1) for c in (COTConfig(), SHOTConfig(1e-3, 0.3), RECIPE)}) == 3
+
+
+def test_cached_returns_stored_predictions_and_never_trains(tmp_path):
+    ev = _evaluator(tmp_path)
+    env = ev.stream.environments[0]
+    ev.evaluate(env, RECIPE, 9)
+    _, pT = ev.cached(env, RECIPE, 9)
+    assert pT.shape == (len(env.T["W"]), 2)
+    with pytest.raises(KeyError):
+        ev.cached(env, RECIPE, 10)
+
+
+def test_dfid_is_defined_for_recipes_only(tmp_path):
+    ev = _evaluator(tmp_path)
+    with pytest.raises(TypeError):
+        ev.dfid(ev.stream.environments[0], COTConfig(), 1)
