@@ -166,3 +166,25 @@ def test_dfid_is_defined_for_recipes_only(tmp_path):
     ev = _evaluator(tmp_path)
     with pytest.raises(TypeError):
         ev.dfid(ev.stream.environments[0], COTConfig(), 1)
+
+
+def test_cache_entries_are_published_whole_and_leave_no_temporary_files(tmp_path):
+    ev = _evaluator(tmp_path)
+    env = ev.stream.environments[0]
+    ev.evaluate(env, RECIPE, 3)
+    assert [p.suffix for p in tmp_path.iterdir()] == [".npz"] and not list(tmp_path.glob("*tmp*"))
+
+
+def test_publish_keeps_another_processs_finished_copy_when_windows_refuses_the_rename(tmp_path, monkeypatch):
+    import tevc.evaluator as evaluator_module
+    target = tmp_path / "k.npz"
+    target.write_bytes(b"theirs")
+
+    def refuse(src, dst):
+        raise PermissionError("in use")
+
+    monkeypatch.setattr(evaluator_module.os, "replace", refuse)
+    evaluator_module._publish(target, lambda p: p.write_bytes(b"mine"))
+    assert target.read_bytes() == b"theirs" and [p.name for p in tmp_path.iterdir()] == ["k.npz"]
+    with pytest.raises(PermissionError):
+        evaluator_module._publish(tmp_path / "new.npz", lambda p: p.write_bytes(b"mine"))

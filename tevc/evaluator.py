@@ -8,6 +8,7 @@ windows before prediction (COT only).
 """
 import hashlib
 import json
+import os
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -24,6 +25,19 @@ def cluster_weights(env, ds):
     """Frozen D1 buffer weights (spec §4): k-means on the standardised physics features of U, 1 / cluster size."""
     X = features.extract(env.U["W"], ds.fs, env.rpm / 60.0, ds.geometry, znorm=True)
     return cluster_balance_weights(X, ds.n_classes)[0]
+
+
+def _publish(path, write):
+    """write(temporary path), then rename it to path, so a concurrent shard reads a finished entry or none. When
+    another process already published the entry and holds it open (Windows refuses the rename), its copy stands."""
+    tmp = path.with_name(f"{path.stem}.{os.getpid()}.tmp{path.suffix}")
+    write(tmp)
+    try:
+        os.replace(tmp, path)
+    except PermissionError:
+        if not path.exists():
+            raise
+        tmp.unlink(missing_ok=True)
 
 
 @dataclass(frozen=True)
@@ -80,7 +94,7 @@ class RecipeEvaluator:
         view = self.view_fn(recipe, self.stream, env)
         pU, pT = self.predict_fn(model, view(env.U["W"])), self.predict_fn(model, view(env.T["W"]))
         cost = time.time() - t0
-        np.savez(path, pU=pU, pT=pT, cost_s=cost)
+        _publish(path, lambda p: np.savez(p, pU=pU, pT=pT, cost_s=cost))
         return pU, pT, cost, False
 
     def cached(self, env, recipe, seed):
@@ -119,9 +133,10 @@ class RecipeEvaluator:
             with np.load(path) as z:
                 drift = float(np.abs(z["pU"] - pU).max())
         else:
-            np.savez(path, pU=pU, pT=self.predict_fn(model, env.T["W"]), cost_s=time.time() - t0)
+            pT, cost = self.predict_fn(model, env.T["W"]), time.time() - t0
+            _publish(path, lambda p: np.savez(p, pU=pU, pT=pT, cost_s=cost))
             drift = 0.0
-        side.write_text(json.dumps({"dfid": value, "pU_drift": drift}))
+        _publish(side, lambda p: p.write_text(json.dumps({"dfid": value, "pU_drift": drift})))
         return value, False
 
     def evaluate(self, env, recipe, seed):
