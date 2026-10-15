@@ -96,3 +96,41 @@ def search(method, evaluator, env, run_seed, budget=B):
     """The run's candidates in order, candidate k trained with seed run_seed * 100 + k; returns the trials."""
     return [Trial(c, run_seed * 100 + k, evaluator.evaluate(env, c, run_seed * 100 + k).fitness)
             for k, c in enumerate(sample_configs(method, run_seed, budget))]
+
+
+def dsr_simulate(x, r, l, eps):
+    """Hu, Tang & Chen (2019) Algorithm 1, steps 2-7, on one example x (n samples) for pseudo parameters r, l and
+    noise eps (length >= N): resample at coordinates k r dt, k = 1..N with N r < n (their Eqs. 1-3); l b + eps
+    (Eq. 4); FFT at resolution 1/(N dt); re-grid the complex spectrum to resolution 1/(n dt) by direct complex
+    linear interpolation (their chosen option, Fig. 5); IFFT; real part x sqrt(2). Every frequency, structural
+    resonances included, is multiplied by r."""
+    x = np.asarray(x, dtype=np.float64)
+    n = len(x)
+    N = int(np.ceil(n / r)) - 1
+    b = np.interp(np.arange(1, N + 1) * r, np.arange(1, n + 1), x)
+    spec = np.fft.fft(l * b + eps[:N])
+    old, new = np.arange(N) / N, np.arange(n) / n                   # cycles per sample
+    regrid = np.interp(new, old, spec.real) + 1j * np.interp(new, old, spec.imag)
+    return (np.real(np.fft.ifft(regrid)) * np.sqrt(2.0)).astype(np.float32)
+
+
+def _positive_normal(rng, mean, var):
+    """N(mean, var) redrawn until positive (DSR's boundary constraint r, l > 0)."""
+    while True:
+        v = rng.normal(mean, np.sqrt(var))
+        if v > 0:
+            return float(v)
+
+
+def dsr_training_set(config, W, y, seed):
+    """The z-normalised windows plus config.copies DSR vicinal examples of each, pseudo parameters drawn per example.
+    Windows are z-normalised first, as every model input is, so var_e is relative to a window's variance."""
+    rng = np.random.default_rng([seed, 2019])
+    Z, y = znorm(W), np.asarray(y)
+    sims, labels = [], []
+    for x, label in zip(Z, y):
+        for _ in range(config.copies):
+            r, l = _positive_normal(rng, 1.0, config.var_r), _positive_normal(rng, 1.0, config.var_l)
+            sims.append(dsr_simulate(x, r, l, rng.normal(0.0, np.sqrt(config.var_e), int(np.ceil(len(x) / r)) - 1)))
+            labels.append(label)
+    return np.concatenate([Z, np.stack(sims)]), np.concatenate([y, np.asarray(labels, dtype=y.dtype)])

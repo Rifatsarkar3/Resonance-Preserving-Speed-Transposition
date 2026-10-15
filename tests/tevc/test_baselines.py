@@ -1,9 +1,10 @@
 from dataclasses import asdict
 
 import numpy as np
+import pytest
 
 from tevc.baselines import (DSR_PUBLISHED, METHODS, COTConfig, DSRConfig, SHOTConfig, UDAConfig, config_from_dict,
-                            sample_configs, search)
+                            dsr_simulate, dsr_training_set, sample_configs, search)
 from tevc.optimizers import B
 from tevc.recipe import Recipe
 from tevc.stream import Environment
@@ -29,3 +30,23 @@ def test_search_evaluates_the_candidates_in_order_with_their_own_seeds(fake_eval
     trials = search("CDAN", fake_evaluator, Environment("fake@1000", 1000.0, {}, {}), 7)
     assert [t.recipe for t in trials] == sample_configs("CDAN", 7)
     assert [t.seed for t in trials] == list(range(700, 730))
+
+
+def _dominant_bin(x):
+    return int(np.argmax(np.abs(np.fft.rfft(x))[1:])) + 1
+
+
+@pytest.mark.parametrize("r", [0.8, 1.25])
+def test_dsr_moves_every_frequency_by_the_pseudo_speed_ratio(r):
+    n = 4096
+    out = dsr_simulate(np.sin(2 * np.pi * 0.01 * np.arange(n)), r, 1.0, np.zeros(2 * n))
+    assert len(out) == n and abs(_dominant_bin(out) - 0.01 * r * n) <= 1.5
+
+
+def test_dsr_training_set_is_seeded_and_keeps_the_window_length():
+    rng = np.random.default_rng(0)
+    W, y = rng.standard_normal((3, 512)).astype(np.float32), np.array([0, 1, 1])
+    a, ya = dsr_training_set(DSR_PUBLISHED, W, y, seed=3)
+    b, _ = dsr_training_set(DSR_PUBLISHED, W, y, seed=3)
+    assert a.shape == (3 * (1 + DSR_PUBLISHED.copies), 512) and np.array_equal(a, b)
+    assert list(ya) == [0, 1, 1] + [0] * 4 + [1] * 8
