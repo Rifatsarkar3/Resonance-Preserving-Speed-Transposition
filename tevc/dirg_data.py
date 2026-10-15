@@ -22,7 +22,8 @@ ROOT = Path("data/raw/DIRG")
 SPEEDS_HZ = (100, 200, 300, 400, 500)
 LOAD_MV = (450, 550)            # nominal 1000 N
 RADIAL = {"y": 1, "z": 2}       # matrix columns of channels 2 and 3 (accelerometer A1, radial)
-CHANNEL = None                  # frozen from the channel rule (tevc.probes.dirg_channel), library speed only
+CHANNEL = "z"                   # frozen 2026-10-15 by the channel rule on the 300 Hz records only (z 100.00 % vs
+                                # y 98.93 %, 5-fold blocked CV; outputs/tevc/dirg_channel.json)
 GEOMETRY = {"N_balls": 10, "d_mm": 9.0, "D_mm": 40.5, "alpha_deg": 0.0}
 SPEED_BAND = (0.85, 1.00)       # search band for the shaft speed, x nominal
 ZERO_PAD = 8
