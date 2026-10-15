@@ -19,6 +19,7 @@ import numpy as np
 from scipy.stats import rankdata
 
 from tevc import features
+from tevc.agent import RECUR
 from tevc.baselines import config_from_dict
 from tevc.evaluator import RecipeEvaluator
 
@@ -156,3 +157,28 @@ class Scorer:
         im = [c["fitness"] for c in cands]
         score = im if rule == "IM" else [self.stats(env, c)[1][(aggregation, correlation)] for c in cands]
         return choose(rule, im, score)
+
+
+def same_model(a, b):
+    """Whether two result-file entries name the same trained model (configuration and training seed)."""
+    return config_from_dict(a) == config_from_dict(b) and int(a["seed"]) == int(b["seed"])
+
+
+def replay(entries, envs, pick):
+    """Deployed entry per environment of one archived run when pick(env, candidates) -> index deploys. The archived
+    search stays as it was; at a recurrence the candidate set starts with the rule's own model deployed at the
+    regime's previous visit, as tevc.agent.Agent.handle carries it."""
+    deployed, out = [], []
+    for env, entry in zip(envs, entries, strict=True):
+        if entry["env"] != env.name:
+            raise ValueError(f"archived environment {entry['env']} != stream environment {env.name}")
+        if not entry["trials"]:                 # unchanged speed: the last deployed model stays
+            out.append(deployed[-1][1])
+            continue
+        carried = [c for d, c in deployed if abs(d - entry["d"]) < RECUR][-1:] if entry["n_carried"] else []
+        if len(carried) != entry["n_carried"]:
+            raise ValueError(f"{env.name}: {entry['n_carried']} carried models archived, {len(carried)} rebuilt")
+        cands = carried + entry["trials"]
+        deployed.append((entry["d"], cands[pick(env, cands)]))
+        out.append(deployed[-1][1])
+    return out

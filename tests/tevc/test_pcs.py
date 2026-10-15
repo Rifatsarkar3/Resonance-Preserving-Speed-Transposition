@@ -1,11 +1,12 @@
 from dataclasses import asdict
 
 import numpy as np
+import pytest
 
 from tevc.datasets import PU
 from tevc.features import compute_fault_frequencies
 from tevc.pcs import (AGGREGATIONS, CORRELATIONS, SIGNATURES, VARIANTS, Scorer, Variant, best_variant, choose,
-                      claims, evidence, gate_verdict, pcs, weighted_corr)
+                      claims, evidence, gate_verdict, pcs, replay, same_model, weighted_corr)
 from tevc.recipe import Recipe
 from tevc.stream import Environment, Stream
 
@@ -133,3 +134,44 @@ def test_pcs_prefers_the_model_whose_fault_claims_match_the_envelope_physics():
             assert good[(a, c)] > 0.5 and bad[(a, c)] < 0.0
     cands = [{**cand, "seed": 2, "fitness": 0.9}, {**cand, "seed": 1, "fitness": 0.1}]
     assert scorer.pick(env, cands, "IM") == 0 and scorer.pick(env, cands, "V1", "A-max", "pearson") == 1
+
+
+class _Env:
+    def __init__(self, name):
+        self.name = name
+
+
+def _trial(seed, fitness):
+    return {**asdict(Recipe(0, 0.0, 0.0, 256, 0.0, 0, True)), "seed": seed, "fitness": fitness}
+
+
+def _run(d_last=0.3, name_last="a"):
+    return [{"env": "a", "d": 0.3, "n_carried": 0, "trials": [_trial(1, 0.9), _trial(2, 0.1)]},
+            {"env": "b", "d": 0.0, "n_carried": 0, "trials": [_trial(3, 0.5)]},
+            {"env": name_last, "d": d_last, "n_carried": 1, "trials": [_trial(4, 0.5)]}]
+
+
+def test_replay_carries_each_rules_own_deployment_into_a_recurrence():
+    envs, seen = [_Env("a"), _Env("b"), _Env("a")], []
+
+    def by(key):
+        def pick(env, cands):
+            seen.append([c["seed"] for c in cands])
+            return max(range(len(cands)), key=lambda i: key(cands[i]))
+        return pick
+
+    assert [c["seed"] for c in replay(_run(), envs, by(lambda c: c["fitness"]))] == [1, 3, 1] and seen[-1] == [1, 4]
+    assert [c["seed"] for c in replay(_run(), envs, by(lambda c: -c["fitness"]))] == [2, 3, 2] and seen[-1] == [2, 4]
+
+
+def test_replay_refuses_an_archive_it_cannot_reconstruct():
+    envs, first = [_Env("a"), _Env("b"), _Env("a")], (lambda env, cands: 0)
+    with pytest.raises(ValueError, match="carried"):
+        replay(_run(d_last=0.9), envs, first)          # no earlier visit of that regime to carry
+    with pytest.raises(ValueError, match="environment"):
+        replay(_run(name_last="c"), envs, first)
+
+
+def test_same_model_compares_configuration_and_seed_only():
+    assert same_model(_trial(1, 0.9), {**_trial(1, 0.2), "acc": 0.5})
+    assert not same_model(_trial(1, 0.9), _trial(2, 0.9))
