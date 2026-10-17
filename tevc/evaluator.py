@@ -4,7 +4,9 @@ The agent receives only `Evaluation` (fitness = cluster-balanced IM on the envir
 cost). True accuracy on the environment's test set is for scoring only: `true_accuracy` (stream driver) and
 `hidden_log`, neither of which agent code reads. Predicted probabilities are cached on disk, so re-scoring never
 retrains. Non-recipe candidates (the RESS baselines, tevc.baselines) train through baseline_fn; view_fn transforms
-windows before prediction (COT only).
+windows before prediction (COT only). A candidate kind that defines labelled validation windows without any target
+label (validation_fn: RPST-DA's transposed validation set) also has its predictions on them cached (pV), scored by
+tv_accuracy.
 """
 import hashlib
 import json
@@ -58,7 +60,8 @@ def _fingerprint(*window_sets):
 
 class RecipeEvaluator:
     def __init__(self, stream, model_name="TICNN", epochs=40, cache_dir=Path("outputs/tevc/cache/evals"),
-                 train_fn=train_cnn, predict_fn=predict, weights_fn=None, baseline_fn=None, view_fn=None):
+                 train_fn=train_cnn, predict_fn=predict, weights_fn=None, baseline_fn=None, view_fn=None,
+                 validation_fn=None):
         self.stream, self.model_name, self.epochs = stream, model_name, epochs
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -66,7 +69,8 @@ class RecipeEvaluator:
         self.weights_fn = weights_fn or (lambda env: cluster_weights(env, stream.dataset))
         self.baseline_fn = baseline_fn or baselines.train
         self.view_fn = view_fn or baselines.view
-        self._weights = {}
+        self.validation_fn = validation_fn or baselines.validation
+        self._weights, self._validation = {}, {}
         self.hidden_log = []
 
     def weights(self, env):
@@ -74,6 +78,14 @@ class RecipeEvaluator:
         if env.name not in self._weights:
             self._weights[env.name] = self.weights_fn(env)
         return self._weights[env.name]
+
+    def validation(self, env, config):
+        """Labelled windows `config` is validated on without target labels (RPST-DA's transposed validation set),
+        or None; built once per environment and candidate kind."""
+        key = (getattr(config, "kind", "recipe"), env.name)
+        if key not in self._validation:
+            self._validation[key] = self.validation_fn(config, self.stream, env)
+        return self._validation[key]
 
     def _key(self, env, recipe, seed):
         r = asdict(recipe)
@@ -89,13 +101,16 @@ class RecipeEvaluator:
         if path.exists():
             z = np.load(path)
             return z["pU"], z["pT"], float(z["cost_s"]), True
+        V = self.validation(env, recipe)
         t0 = time.time()
         model, _ = self._train(env, recipe, seed)
         view = self.view_fn(recipe, self.stream, env)
-        pU, pT = self.predict_fn(model, view(env.U["W"])), self.predict_fn(model, view(env.T["W"]))
+        arrays = {"pU": self.predict_fn(model, view(env.U["W"])), "pT": self.predict_fn(model, view(env.T["W"]))}
+        if V is not None:
+            arrays["pV"] = self.predict_fn(model, view(V["W"]))
         cost = time.time() - t0
-        _publish(path, lambda p: np.savez(p, pU=pU, pT=pT, cost_s=cost))
-        return pU, pT, cost, False
+        _publish(path, lambda p: np.savez(p, cost_s=cost, **arrays))
+        return arrays["pU"], arrays["pT"], cost, False
 
     def cached(self, env, recipe, seed):
         """(pU, pT) of a model already in the cache, never training (reliability re-scoring); KeyError if absent."""
@@ -152,3 +167,15 @@ class RecipeEvaluator:
         """Scoring only (stream driver, never the agent): accuracy of that trained model on env's test set."""
         _, pT, _, _ = self.probabilities(env, recipe, seed)
         return float((pT.argmax(axis=1) == env.T["y"]).mean())
+
+    def tv_accuracy(self, env, config, seed):
+        """Label-free selection score of RPST-DA: accuracy of that trained model on the transposed validation set,
+        whose labels are the library's; trains and caches the model when needed."""
+        V = self.validation(env, config)
+        if V is None:
+            raise TypeError(f"no transposed validation set is defined for {config!r}")
+        path = self.cache_dir / f"{self._key(env, config, seed)}.npz"
+        if not path.exists():
+            self.probabilities(env, config, seed)
+        with np.load(path) as z:
+            return float((z["pV"].argmax(axis=1) == V["y"]).mean())

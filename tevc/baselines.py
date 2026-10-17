@@ -4,7 +4,9 @@ change, deployed by the cluster-balanced IM on the unlabelled buffer, the label-
 Candidate 0 is the published setting; the other 29 are drawn once per run from ranges around it, so all
 environments of a run see the same candidates. Candidates are frozen dataclasses with a `kind` field: the evaluator
 caches them like recipes (asdict -> cache key) and result files rebuild them (config_from_dict). COT uses the same
-speed information as every method (library speed and environment speed).
+speed information as every method (library speed and environment speed). RPSTDAConfig, the candidate of the MSSP
+method (tevc.rpstda), is registered here with the other kinds so the evaluator and result files treat it alike; it is
+not a baseline and not in METHODS.
 """
 import hashlib
 from collections import OrderedDict
@@ -53,7 +55,32 @@ class SHOTConfig:
     kind: str = "SHOT"
 
 
-KINDS = {"DSR": DSRConfig, "COT": COTConfig, "UDA": UDAConfig, "SHOT": SHOTConfig}
+RPSTDA_Q_MAX = 0.8      # RPST-DA speed guard (MSSP spec §2.2): no training copy is synthesised at the target speed
+
+
+@dataclass(frozen=True)
+class RPSTDAConfig:
+    """An RPST-DA candidate (tevc.rpstda; MSSP spec 2026-10-18 §2): DANN or CDAN whose labelled source is the
+    library's train part plus RPST copies (beta = 0) at s_lib (s_env / s_lib) ** q for n_targets q evenly spaced in
+    [q_lo, q_hi]; copies = 0 trains on the train part alone (the no-copies arm)."""
+    method: str          # DANN | CDAN
+    lr: float
+    weight: float        # adversarial coefficient
+    n_targets: int
+    q_lo: float
+    q_hi: float
+    n_fft: int           # phase-vocoder frame of the copies
+    copies: int          # windows per class per synthesised speed
+    kind: str = "RPSTDA"
+
+    def __post_init__(self):
+        if self.method not in ("DANN", "CDAN"):
+            raise ValueError(f"RPST-DA adapts with DANN or CDAN, not {self.method}")
+        if not 0.0 <= self.q_lo <= self.q_hi <= RPSTDA_Q_MAX:
+            raise ValueError(f"RPST-DA needs 0 <= q_lo <= q_hi <= {RPSTDA_Q_MAX}, got [{self.q_lo}, {self.q_hi}]")
+
+
+KINDS = {"DSR": DSRConfig, "COT": COTConfig, "UDA": UDAConfig, "SHOT": SHOTConfig, "RPSTDA": RPSTDAConfig}
 # Hu et al. 2019, Sec. IV-B: (var_r, var_l, var_e) = (0.02, 0.1, 0.02); their Table 4 enlarges the set 2x, 5x, 10x
 DSR_PUBLISHED = DSRConfig(0.02, 0.1, 0.02, 4)
 DSR_COPIES = (1, 4, 9)
@@ -163,6 +190,15 @@ def view(config, stream, env):
     return lambda W: np.stack([synthesis.resample(w, env.rpm, stream.library_rpm) for w in W])
 
 
+def validation(config, stream, env):
+    """Labelled windows a candidate is validated on without any target label: RPST-DA's transposed validation set
+    (tevc.rpstda.tv_set); None for every other kind."""
+    if not isinstance(config, RPSTDAConfig):
+        return None
+    from tevc import rpstda                      # rpstda imports this module
+    return rpstda.tv_set(stream, env)
+
+
 _MODELS = OrderedDict()
 
 
@@ -198,4 +234,7 @@ def train(config, stream, env, seed, model_name, epochs):
         source = _memo(("SHOT-source",) + key, lambda: uda.train_source(lib["W"], lib["y"], model_name, epochs, seed))
         return uda.train_shot(lib["W"], lib["y"], env.U["W"], config.lr, config.beta, model_name, epochs, seed,
                               source=source), lib["W"]
+    if isinstance(config, RPSTDAConfig):
+        from tevc import rpstda
+        return rpstda.train(config, stream, env, seed, model_name, epochs)
     raise TypeError(f"not a baseline configuration: {config!r}")

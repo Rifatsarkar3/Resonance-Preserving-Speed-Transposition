@@ -3,7 +3,7 @@ from dataclasses import fields
 import numpy as np
 import pytest
 
-from tevc.baselines import COTConfig, SHOTConfig
+from tevc.baselines import COTConfig, RPSTDAConfig, SHOTConfig
 from tevc.evaluator import Evaluation, RecipeEvaluator
 from tevc.recipe import Recipe
 from tevc.stream import Environment, Stream
@@ -188,3 +188,40 @@ def test_publish_keeps_another_processs_finished_copy_when_windows_refuses_the_r
     assert target.read_bytes() == b"theirs" and [p.name for p in tmp_path.iterdir()] == ["k.npz"]
     with pytest.raises(PermissionError):
         evaluator_module._publish(tmp_path / "new.npz", lambda p: p.write_bytes(b"mine"))
+
+
+CANDIDATE = RPSTDAConfig("CDAN", 1e-3, 1.0, 3, 0.3, 0.8, 256, 80)
+
+
+def _tv_evaluator(tmp_path):
+    V = {"W": np.zeros((4, 1000), np.float32), "y": np.array([0, 0, 1, 1])}
+    trained = []
+
+    def baseline_fn(config, stream, env, seed, model_name, epochs):
+        trained.append(seed)
+        return {"seed": seed}, None
+
+    ev = RecipeEvaluator(_stream(), epochs=1, cache_dir=tmp_path, train_fn=_fake_train, predict_fn=_fake_predict,
+                         weights_fn=_uniform_weights, baseline_fn=baseline_fn, view_fn=lambda c, s, e: (lambda W: W),
+                         validation_fn=lambda c, s, e: V if isinstance(c, RPSTDAConfig) else None)
+    return ev, trained
+
+
+def test_transposed_validation_predictions_are_cached_beside_pu_and_pt(tmp_path):
+    ev, trained = _tv_evaluator(tmp_path)
+    env = ev.stream.environments[0]
+    ev.evaluate(env, CANDIDATE, 5)
+    assert ev.tv_accuracy(env, CANDIDATE, 5) == 1.0 and trained == [5]          # the fake model is perfect on V
+    with np.load(tmp_path / f"{ev._key(env, CANDIDATE, 5)}.npz") as z:
+        assert set(z.files) == {"pU", "pT", "pV", "cost_s"}
+
+
+def test_tv_accuracy_trains_when_needed_and_is_undefined_for_other_candidates(tmp_path):
+    ev, trained = _tv_evaluator(tmp_path)
+    env = ev.stream.environments[0]
+    assert ev.tv_accuracy(env, CANDIDATE, 6) == 1.0 and trained == [6]
+    ev.evaluate(env, RECIPE, 1)
+    with np.load(tmp_path / f"{ev._key(env, RECIPE, 1)}.npz") as z:
+        assert "pV" not in z.files
+    with pytest.raises(TypeError):
+        ev.tv_accuracy(env, RECIPE, 1)
