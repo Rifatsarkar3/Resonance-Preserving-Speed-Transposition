@@ -1,0 +1,539 @@
+{
+ "note": "exploratory WP7, after the DIRG verdict; AGENT from the frozen Ottawa core grid",
+ "baseline_commit": "fd9d2c6df2e0ede57e0e3c5c8e54c84b02e715f3",
+ "summary": {
+  "AGENT": {
+   "runs": 10,
+   "acc_mean": 0.9498999999999999,
+   "acc_std": 0.0029732137494637083,
+   "auc_mean": 0.9490433333333333,
+   "auc_std": 0.003843451862873031,
+   "evals_per_stream": 150.0
+  },
+  "DSR": {
+   "runs": 10,
+   "acc_mean": 0.9352,
+   "acc_std": 0.005158488150611576,
+   "auc_mean": 0.9340016666666665,
+   "auc_std": 0.0075503989960795746,
+   "evals_per_stream": 150.0
+  },
+  "COT": {
+   "runs": 10,
+   "acc_mean": 0.8312999999999999,
+   "acc_std": 0.021341508850125868,
+   "auc_mean": 0.806385,
+   "auc_std": 0.018300864354207677,
+   "evals_per_stream": 150.0
+  },
+  "DANN": {
+   "runs": 10,
+   "acc_mean": 0.9730500000000001,
+   "acc_std": 0.014768970851078304,
+   "auc_mean": 0.9761916666666666,
+   "auc_std": 0.011304621105252982,
+   "evals_per_stream": 150.0
+  },
+  "DEEP-CORAL": {
+   "runs": 10,
+   "acc_mean": 0.97395,
+   "acc_std": 0.005997707895521406,
+   "auc_mean": 0.9722883333333334,
+   "auc_std": 0.005874209403069569,
+   "evals_per_stream": 150.0
+  },
+  "CDAN": {
+   "runs": 10,
+   "acc_mean": 0.9835499999999999,
+   "acc_std": 0.008981787127292694,
+   "auc_mean": 0.981925,
+   "auc_std": 0.007318186060918556,
+   "evals_per_stream": 150.0
+  },
+  "SHOT": {
+   "runs": 10,
+   "acc_mean": 0.9599500000000001,
+   "acc_std": 0.005529240454167314,
+   "auc_mean": 0.9611883333333333,
+   "auc_std": 0.0034954100856217168,
+   "evals_per_stream": 150.0
+  }
+ },
+ "reliability": {
+  "AGENT": {
+   "runs": 10,
+   "deployed_acc": 0.9498999999999999,
+   "auc": 0.9490433333333333,
+   "macro_f1": 0.9485292766605843,
+   "missed_fault_rate": 0.0,
+   "false_alarm_rate": 0.0025,
+   "ece": 0.04270987574011089
+  },
+  "DSR": {
+   "runs": 10,
+   "deployed_acc": 0.9352,
+   "auc": 0.9340016666666665,
+   "macro_f1": 0.9329572651256015,
+   "missed_fault_rate": 0.0005,
+   "false_alarm_rate": 0.0085,
+   "ece": 0.06233496034294367
+  },
+  "COT": {
+   "runs": 10,
+   "deployed_acc": 0.8312999999999999,
+   "auc": 0.806385,
+   "macro_f1": 0.820164520256267,
+   "missed_fault_rate": 0.04475,
+   "false_alarm_rate": 0.19749999999999998,
+   "ece": 0.11590226355791093
+  },
+  "DANN": {
+   "runs": 10,
+   "deployed_acc": 0.9730500000000001,
+   "auc": 0.9761916666666666,
+   "macro_f1": 0.9719472321602562,
+   "missed_fault_rate": 0.0,
+   "false_alarm_rate": 0.00125,
+   "ece": 0.02415033609420062
+  },
+  "DEEP-CORAL": {
+   "runs": 10,
+   "deployed_acc": 0.97395,
+   "auc": 0.9722883333333334,
+   "macro_f1": 0.9734961927404594,
+   "missed_fault_rate": 0.0,
+   "false_alarm_rate": 0.0,
+   "ece": 0.017573717592656614
+  },
+  "CDAN": {
+   "runs": 10,
+   "deployed_acc": 0.9835499999999999,
+   "auc": 0.981925,
+   "macro_f1": 0.9833367105368473,
+   "missed_fault_rate": 0.0,
+   "false_alarm_rate": 0.0,
+   "ece": 0.01423193107694386
+  },
+  "SHOT": {
+   "runs": 10,
+   "deployed_acc": 0.9599500000000001,
+   "auc": 0.9611883333333333,
+   "macro_f1": 0.9589641924134312,
+   "missed_fault_rate": 0.0,
+   "false_alarm_rate": 0.0,
+   "ece": 0.03179335365891457
+  }
+ },
+ "accuracy_tests": [
+  {
+   "first": "AGENT",
+   "second": "DSR",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.01469999999999998,
+   "ci95": [
+    0.011649999999999938,
+    0.018799999999999963
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.0009765625,
+   "p_holm": 0.01171875
+  },
+  {
+   "first": "AGENT",
+   "second": "DSR",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.01504166666666661,
+   "ci95": [
+    0.010456624999999936,
+    0.02051683333333326
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.0009765625,
+   "p_holm": 0.01171875
+  },
+  {
+   "first": "AGENT",
+   "second": "COT",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.11860000000000001,
+   "ci95": [
+    0.10485,
+    0.13170000000000007
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.0009765625,
+   "p_holm": 0.01171875
+  },
+  {
+   "first": "AGENT",
+   "second": "COT",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.14265833333333325,
+   "ci95": [
+    0.1297299999999999,
+    0.15293366666666655
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.0009765625,
+   "p_holm": 0.01171875
+  },
+  {
+   "first": "AGENT",
+   "second": "DANN",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -0.02315000000000004,
+   "ci95": [
+    -0.032151250000000076,
+    -0.012398749999999965
+   ],
+   "wins": 1,
+   "ties": 0,
+   "losses": 9,
+   "p": 0.998046875,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "DANN",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -0.027148333333333406,
+   "ci95": [
+    -0.034201666666666596,
+    -0.018676583333333517
+   ],
+   "wins": 1,
+   "ties": 0,
+   "losses": 9,
+   "p": 0.9990234375,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "DEEP-CORAL",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -0.024050000000000005,
+   "ci95": [
+    -0.027949999999999996,
+    -0.019650000000000035
+   ],
+   "wins": 0,
+   "ties": 0,
+   "losses": 10,
+   "p": 1.0,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "DEEP-CORAL",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -0.02324500000000008,
+   "ci95": [
+    -0.02739845833333337,
+    -0.019628291666666825
+   ],
+   "wins": 0,
+   "ties": 0,
+   "losses": 10,
+   "p": 1.0,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "CDAN",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -0.03365000000000005,
+   "ci95": [
+    -0.03880000000000009,
+    -0.027750000000000052
+   ],
+   "wins": 0,
+   "ties": 0,
+   "losses": 10,
+   "p": 1.0,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "CDAN",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -0.032881666666666795,
+   "ci95": [
+    -0.03791837500000014,
+    -0.027399916666666795
+   ],
+   "wins": 0,
+   "ties": 0,
+   "losses": 10,
+   "p": 1.0,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "SHOT",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -0.010050000000000048,
+   "ci95": [
+    -0.01325000000000014,
+    -0.00685
+   ],
+   "wins": 1,
+   "ties": 0,
+   "losses": 9,
+   "p": 0.9990234375,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "SHOT",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -0.01214500000000005,
+   "ci95": [
+    -0.014418499999999987,
+    -0.00961333333333345
+   ],
+   "wins": 0,
+   "ties": 0,
+   "losses": 10,
+   "p": 1.0,
+   "p_holm": 1.0
+  }
+ ],
+ "reliability_tests": [
+  {
+   "first": "AGENT",
+   "second": "DSR",
+   "metric": "missed_fault_rate",
+   "better": "lower",
+   "runs": 10,
+   "mean_diff": 0.0005,
+   "ci95": [
+    0.0,
+    0.0015
+   ],
+   "wins": 1,
+   "ties": 9,
+   "losses": 0,
+   "p": 0.5,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "DSR",
+   "metric": "false_alarm_rate",
+   "better": "lower",
+   "runs": 10,
+   "mean_diff": 0.006,
+   "ci95": [
+    -0.0045,
+    0.022500000000000003
+   ],
+   "wins": 4,
+   "ties": 3,
+   "losses": 3,
+   "p": 0.3984375,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "COT",
+   "metric": "missed_fault_rate",
+   "better": "lower",
+   "runs": 10,
+   "mean_diff": 0.044750000000000005,
+   "ci95": [
+    0.029500000000000005,
+    0.0576875
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.0009765625,
+   "p_holm": 0.01171875
+  },
+  {
+   "first": "AGENT",
+   "second": "COT",
+   "metric": "false_alarm_rate",
+   "better": "lower",
+   "runs": 10,
+   "mean_diff": 0.19499999999999998,
+   "ci95": [
+    0.13174375,
+    0.26825
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.0009765625,
+   "p_holm": 0.01171875
+  },
+  {
+   "first": "AGENT",
+   "second": "DANN",
+   "metric": "missed_fault_rate",
+   "better": "lower",
+   "runs": 10,
+   "mean_diff": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "wins": 0,
+   "ties": 10,
+   "losses": 0,
+   "p": 1.0,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "DANN",
+   "metric": "false_alarm_rate",
+   "better": "lower",
+   "runs": 10,
+   "mean_diff": -0.0012499999999999998,
+   "ci95": [
+    -0.0035000000000000005,
+    0.001
+   ],
+   "wins": 1,
+   "ties": 6,
+   "losses": 3,
+   "p": 0.875,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "DEEP-CORAL",
+   "metric": "missed_fault_rate",
+   "better": "lower",
+   "runs": 10,
+   "mean_diff": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "wins": 0,
+   "ties": 10,
+   "losses": 0,
+   "p": 1.0,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "DEEP-CORAL",
+   "metric": "false_alarm_rate",
+   "better": "lower",
+   "runs": 10,
+   "mean_diff": -0.0025,
+   "ci95": [
+    -0.00575,
+    0.0
+   ],
+   "wins": 0,
+   "ties": 7,
+   "losses": 3,
+   "p": 1.0,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "CDAN",
+   "metric": "missed_fault_rate",
+   "better": "lower",
+   "runs": 10,
+   "mean_diff": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "wins": 0,
+   "ties": 10,
+   "losses": 0,
+   "p": 1.0,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "CDAN",
+   "metric": "false_alarm_rate",
+   "better": "lower",
+   "runs": 10,
+   "mean_diff": -0.0025,
+   "ci95": [
+    -0.00575,
+    0.0
+   ],
+   "wins": 0,
+   "ties": 7,
+   "losses": 3,
+   "p": 1.0,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "SHOT",
+   "metric": "missed_fault_rate",
+   "better": "lower",
+   "runs": 10,
+   "mean_diff": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "wins": 0,
+   "ties": 10,
+   "losses": 0,
+   "p": 1.0,
+   "p_holm": 1.0
+  },
+  {
+   "first": "AGENT",
+   "second": "SHOT",
+   "metric": "false_alarm_rate",
+   "better": "lower",
+   "runs": 10,
+   "mean_diff": -0.0025,
+   "ci95": [
+    -0.00575,
+    0.0
+   ],
+   "wins": 0,
+   "ties": 7,
+   "losses": 3,
+   "p": 1.0,
+   "p_holm": 1.0
+  }
+ ]
+}
