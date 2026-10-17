@@ -1,0 +1,357 @@
+{
+ "note": "exploratory, after the DIRG verdict",
+ "protocol_commit": "1708d7279c91f54690ce08cea29b4d92433bf66f",
+ "methods": {
+  "STATIC-NONE": {
+   "deployed": 0.25869674185463665,
+   "best_available": 0.25869674185463665,
+   "gap": 0.0,
+   "per_environment": {
+    "0:dirg@400Hz": {
+     "deployed": 0.14461152882205514,
+     "best_available": 0.14461152882205514
+    },
+    "1:dirg@500Hz": {
+     "deployed": 0.20250626566416038,
+     "best_available": 0.20250626566416038
+    },
+    "2:dirg@400Hz": {
+     "deployed": 0.14461152882205514,
+     "best_available": 0.14461152882205514
+    },
+    "3:dirg@200Hz": {
+     "deployed": 0.3619047619047619,
+     "best_available": 0.3619047619047619
+    },
+    "4:dirg@100Hz": {
+     "deployed": 0.43984962406015027,
+     "best_available": 0.43984962406015027
+    }
+   }
+  },
+  "STATIC-H2": {
+   "deployed": 0.2832080200501253,
+   "best_available": 0.2832080200501253,
+   "gap": 0.0,
+   "per_environment": {
+    "0:dirg@400Hz": {
+     "deployed": 0.2385964912280701,
+     "best_available": 0.2385964912280701
+    },
+    "1:dirg@500Hz": {
+     "deployed": 0.22305764411027568,
+     "best_available": 0.22305764411027568
+    },
+    "2:dirg@400Hz": {
+     "deployed": 0.2385964912280701,
+     "best_available": 0.2385964912280701
+    },
+    "3:dirg@200Hz": {
+     "deployed": 0.41127819548872174,
+     "best_available": 0.41127819548872174
+    },
+    "4:dirg@100Hz": {
+     "deployed": 0.30451127819548873,
+     "best_available": 0.30451127819548873
+    }
+   }
+  },
+  "DSR": {
+   "deployed": 0.27438596491228073,
+   "best_available": 0.3829573934837092,
+   "gap": 0.10857142857142855,
+   "per_environment": {
+    "0:dirg@400Hz": {
+     "deployed": 0.16115288220551377,
+     "best_available": 0.3060150375939849
+    },
+    "1:dirg@500Hz": {
+     "deployed": 0.20576441102756893,
+     "best_available": 0.2759398496240601
+    },
+    "2:dirg@400Hz": {
+     "deployed": 0.16115288220551377,
+     "best_available": 0.3060150375939849
+    },
+    "3:dirg@200Hz": {
+     "deployed": 0.4724310776942356,
+     "best_available": 0.5794486215538848
+    },
+    "4:dirg@100Hz": {
+     "deployed": 0.3714285714285714,
+     "best_available": 0.4473684210526315
+    }
+   }
+  },
+  "COT": {
+   "deployed": 0.357844611528822,
+   "best_available": 0.4391478696741855,
+   "gap": 0.08130325814536342,
+   "per_environment": {
+    "0:dirg@400Hz": {
+     "deployed": 0.47819548872180456,
+     "best_available": 0.5115288220551377
+    },
+    "1:dirg@500Hz": {
+     "deployed": 0.16491228070175437,
+     "best_available": 0.35187969924812024
+    },
+    "2:dirg@400Hz": {
+     "deployed": 0.47819548872180456,
+     "best_available": 0.5115288220551377
+    },
+    "3:dirg@200Hz": {
+     "deployed": 0.4398496240601504,
+     "best_available": 0.4924812030075188
+    },
+    "4:dirg@100Hz": {
+     "deployed": 0.22807017543859648,
+     "best_available": 0.3283208020050125
+    }
+   }
+  },
+  "DANN": {
+   "deployed": 0.41208020050125305,
+   "best_available": 0.6846616541353383,
+   "gap": 0.2725814536340852,
+   "per_environment": {
+    "0:dirg@400Hz": {
+     "deployed": 0.27944862155388467,
+     "best_available": 0.5987468671679197
+    },
+    "1:dirg@500Hz": {
+     "deployed": 0.33233082706766914,
+     "best_available": 0.6170426065162907
+    },
+    "2:dirg@400Hz": {
+     "deployed": 0.27944862155388467,
+     "best_available": 0.5987468671679197
+    },
+    "3:dirg@200Hz": {
+     "deployed": 0.7992481203007519,
+     "best_available": 0.8862155388471177
+    },
+    "4:dirg@100Hz": {
+     "deployed": 0.36992481203007516,
+     "best_available": 0.7225563909774436
+    }
+   }
+  },
+  "DEEP-CORAL": {
+   "deployed": 0.33333333333333337,
+   "best_available": 0.4954887218045112,
+   "gap": 0.16215538847117794,
+   "per_environment": {
+    "0:dirg@400Hz": {
+     "deployed": 0.19649122807017544,
+     "best_available": 0.2932330827067669
+    },
+    "1:dirg@500Hz": {
+     "deployed": 0.23483709273182957,
+     "best_available": 0.48020050125313285
+    },
+    "2:dirg@400Hz": {
+     "deployed": 0.19649122807017544,
+     "best_available": 0.2932330827067669
+    },
+    "3:dirg@200Hz": {
+     "deployed": 0.5132832080200501,
+     "best_available": 0.6258145363408522
+    },
+    "4:dirg@100Hz": {
+     "deployed": 0.525563909774436,
+     "best_available": 0.7849624060150375
+    }
+   }
+  },
+  "CDAN": {
+   "deployed": 0.3885213032581454,
+   "best_available": 0.6312781954887218,
+   "gap": 0.2427568922305764,
+   "per_environment": {
+    "0:dirg@400Hz": {
+     "deployed": 0.3478696741854636,
+     "best_available": 0.5764411027568922
+    },
+    "1:dirg@500Hz": {
+     "deployed": 0.22581453634085208,
+     "best_available": 0.4849624060150376
+    },
+    "2:dirg@400Hz": {
+     "deployed": 0.3478696741854636,
+     "best_available": 0.5764411027568922
+    },
+    "3:dirg@200Hz": {
+     "deployed": 0.743107769423559,
+     "best_available": 0.8268170426065161
+    },
+    "4:dirg@100Hz": {
+     "deployed": 0.27794486215538844,
+     "best_available": 0.6917293233082706
+    }
+   }
+  },
+  "SHOT": {
+   "deployed": 0.3246616541353383,
+   "best_available": 0.5341854636591479,
+   "gap": 0.20952380952380956,
+   "per_environment": {
+    "0:dirg@400Hz": {
+     "deployed": 0.24285714285714283,
+     "best_available": 0.36040100250626567
+    },
+    "1:dirg@500Hz": {
+     "deployed": 0.16616541353383457,
+     "best_available": 0.45288220551378444
+    },
+    "2:dirg@400Hz": {
+     "deployed": 0.24285714285714283,
+     "best_available": 0.36040100250626567
+    },
+    "3:dirg@200Hz": {
+     "deployed": 0.5,
+     "best_available": 0.693984962406015
+    },
+    "4:dirg@100Hz": {
+     "deployed": 0.4714285714285714,
+     "best_available": 0.8032581453634086
+    }
+   }
+  },
+  "RANDOM": {
+   "deployed": 0.3442606516290727,
+   "best_available": 0.4178446115288221,
+   "gap": 0.07358395989974938,
+   "per_environment": {
+    "0:dirg@400Hz": {
+     "deployed": 0.25964912280701746,
+     "best_available": 0.31228070175438594
+    },
+    "1:dirg@500Hz": {
+     "deployed": 0.24436090225563908,
+     "best_available": 0.33533834586466166
+    },
+    "2:dirg@400Hz": {
+     "deployed": 0.22756892230576442,
+     "best_available": 0.3050125313283208
+    },
+    "3:dirg@200Hz": {
+     "deployed": 0.4954887218045113,
+     "best_available": 0.5654135338345865
+    },
+    "4:dirg@100Hz": {
+     "deployed": 0.49423558897243114,
+     "best_available": 0.5711779448621555
+    }
+   }
+  },
+  "GA-RESTART": {
+   "deployed": 0.3270175438596491,
+   "best_available": 0.4217543859649123,
+   "gap": 0.09473684210526315,
+   "per_environment": {
+    "0:dirg@400Hz": {
+     "deployed": 0.25263157894736843,
+     "best_available": 0.32005012531328314
+    },
+    "1:dirg@500Hz": {
+     "deployed": 0.22807017543859648,
+     "best_available": 0.3170426065162907
+    },
+    "2:dirg@400Hz": {
+     "deployed": 0.2649122807017544,
+     "best_available": 0.33934837092731823
+    },
+    "3:dirg@200Hz": {
+     "deployed": 0.4155388471177945,
+     "best_available": 0.5651629072681704
+    },
+    "4:dirg@100Hz": {
+     "deployed": 0.47393483709273176,
+     "best_available": 0.5671679197994987
+    }
+   }
+  },
+  "WARM-TRANSFER": {
+   "deployed": 0.3411027568922306,
+   "best_available": 0.43273182957393486,
+   "gap": 0.09162907268170425,
+   "per_environment": {
+    "0:dirg@400Hz": {
+     "deployed": 0.23909774436090223,
+     "best_available": 0.32255639097744365
+    },
+    "1:dirg@500Hz": {
+     "deployed": 0.2162907268170426,
+     "best_available": 0.31303258145363405
+    },
+    "2:dirg@400Hz": {
+     "deployed": 0.25864661654135335,
+     "best_available": 0.35563909774436087
+    },
+    "3:dirg@200Hz": {
+     "deployed": 0.47794486215538845,
+     "best_available": 0.5987468671679198
+    },
+    "4:dirg@100Hz": {
+     "deployed": 0.5135338345864662,
+     "best_available": 0.5736842105263158
+    }
+   }
+  },
+  "AGENT": {
+   "deployed": 0.340250626566416,
+   "best_available": 0.4424561403508772,
+   "gap": 0.10220551378446113,
+   "per_environment": {
+    "0:dirg@400Hz": {
+     "deployed": 0.2844611528822055,
+     "best_available": 0.32631578947368417
+    },
+    "1:dirg@500Hz": {
+     "deployed": 0.20977443609022556,
+     "best_available": 0.3443609022556391
+    },
+    "2:dirg@400Hz": {
+     "deployed": 0.3072681704260652,
+     "best_available": 0.3426065162907268
+    },
+    "3:dirg@200Hz": {
+     "deployed": 0.3884711779448622,
+     "best_available": 0.6082706766917293
+    },
+    "4:dirg@100Hz": {
+     "deployed": 0.5112781954887218,
+     "best_available": 0.5907268170426065
+    }
+   }
+  },
+  "AGENT-B1": {
+   "deployed": 0.3473684210526315,
+   "best_available": 0.4416040100250626,
+   "gap": 0.09423558897243108,
+   "per_environment": {
+    "0:dirg@400Hz": {
+     "deployed": 0.30676691729323313,
+     "best_available": 0.3902255639097744
+    },
+    "1:dirg@500Hz": {
+     "deployed": 0.18546365914786966,
+     "best_available": 0.29273182957393484
+    },
+    "2:dirg@400Hz": {
+     "deployed": 0.2924812030075188,
+     "best_available": 0.3661654135338346
+    },
+    "3:dirg@200Hz": {
+     "deployed": 0.47744360902255645,
+     "best_available": 0.5837092731829574
+    },
+    "4:dirg@100Hz": {
+     "deployed": 0.4746867167919799,
+     "best_available": 0.5751879699248119
+    }
+   }
+  }
+ }
+}
