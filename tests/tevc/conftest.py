@@ -24,6 +24,9 @@ class FakeEvaluator:
     def dfid(self, env, recipe, seed):              # secondary fitness, deliberately unlike evaluate()
         return -abs(recipe.q_lo - 0.5), False
 
+    def tv_accuracy(self, env, config, seed):       # RPST-DA's label-free validation score, unlike fitness
+        return (seed % 5) / 5
+
 
 @pytest.fixture
 def fake_evaluator():

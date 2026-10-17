@@ -3,6 +3,7 @@
     python -m tevc.run_stream --dataset jnu             # development stream, all methods, 5 independent runs
     python -m tevc.run_stream --dataset pu --runs 1     # first run only
     python -m tevc.run_stream --dataset pu --methods DSR,COT,DANN,DEEP-CORAL,CDAN,SHOT --tag rbase   # RESS baselines
+    python -m tevc.run_stream --dataset pu --methods RPST-DA --tag rpstda   # MSSP RPST-DA development grid
 Writes outputs/tevc/stream_<dataset>.json after every (run, method), so partial results are readable early.
 Methods see only the agent-visible fitness; true accuracy (evaluator.true_accuracy) is used here, for scoring only.
 Ottawa is the confirmatory set: it runs only through the frozen protocol in tevc.confirmatory.
@@ -16,7 +17,7 @@ from pathlib import Path
 
 import numpy as np
 
-from tevc import baselines
+from tevc import baselines, rpstda
 from tevc.agent import Agent
 from tevc.evaluator import Evaluation, RecipeEvaluator
 from tevc.optimizers import B, N_GENES, N_INIT, Trial, bo_search, encode, ga_search, random_search
@@ -26,7 +27,7 @@ from tevc.stream import assert_disjoint, jnu_stream, ottawa_stream, pu_stream
 STREAMS = {"jnu": jnu_stream, "pu": pu_stream, "ottawa": ottawa_stream}
 METHODS = ("STATIC-NONE", "STATIC-H2", "RANDOM", "GA-RESTART", "AGENT", "AGENT-B1")
 EXTRA = ("BO", "WARM-TRANSFER", "ORACLE-FITNESS", "AGENT-NOMEM", "AGENT-NOSURR", "AGENT-NOEVO", "AGENT-NOPRIOR",
-         "AGENT-DFID") + baselines.METHODS
+         "AGENT-DFID") + baselines.METHODS + ("RPST-DA",)
 AGENT_VARIANTS = {"AGENT": {}, "AGENT-B1": {"beta": 1.0}, "AGENT-NOMEM": {"memory": False},
                   "AGENT-NOSURR": {"surrogate": False}, "AGENT-NOEVO": {"evolve": False},
                   "AGENT-NOPRIOR": {"prior": False}, "AGENT-DFID": {}}
@@ -100,19 +101,26 @@ def run_method(method, stream, evaluator, run_seed):
             out.append(([], trials))
         elif method in baselines.METHODS:
             out.append(([], baselines.search(method, evaluator, env, run_seed)))
+        elif method == "RPST-DA":
+            out.append(([], rpstda.search(evaluator, env, run_seed)))
         else:
             fitness = DFIDEvaluator(evaluator) if method == "AGENT-DFID" else evaluator
             out.append(agent.handle(fitness, env, init_rng, op_rng))
     return out
 
 
-def score(evaluator, stream, env, carried, trials, budget=B):
-    """Recovery curve a_k, k = 1..budget: true accuracy of the deployed model (highest fitness so far)."""
+def _highest_fitness(pool):
+    return max(pool, key=lambda t: t.fitness)
+
+
+def score(evaluator, stream, env, carried, trials, budget=B, deploy=_highest_fitness):
+    """Recovery curve a_k, k = 1..budget: true accuracy of the model `deploy` picks from the pool so far (default:
+    the highest fitness)."""
     pool, curve = list(carried), []
     for k in range(budget):
         if k < len(trials):
             pool.append(trials[k])
-        best = max(pool, key=lambda t: t.fitness)
+        best = deploy(pool)
         curve.append(evaluator.true_accuracy(env, best.recipe, best.seed))
     return {"env": env.name, "rpm": env.rpm, "d": float(np.log(env.rpm / stream.library_rpm)),
             "n_evals": len(trials), "n_carried": len(carried),
@@ -120,6 +128,26 @@ def score(evaluator, stream, env, carried, trials, budget=B):
             "deployed_acc": curve[-1], "auc": float(np.mean(curve)), "curve": curve,
             "trials": [{**asdict(t.recipe), "seed": t.seed, "fitness": t.fitness,
                         "acc": evaluator.true_accuracy(env, t.recipe, t.seed)} for t in trials]}
+
+
+def score_rpstda(evaluator, stream, env, trials, budget=B):
+    """An RPST-DA visit, deployed by rank-mixing TV accuracy and IM (rpstda.rank_deploy). Stored alongside,
+    descriptively: every candidate's TV accuracy and the IM-only and TV-only deployments on the same candidates."""
+    tv = {(t.recipe, t.seed): evaluator.tv_accuracy(env, t.recipe, t.seed) for t in trials}
+    s = score(evaluator, stream, env, [], trials, budget, deploy=rpstda.rank_deploy(lambda t: tv[(t.recipe, t.seed)]))
+    for row, t in zip(s["trials"], trials):
+        row["tv_acc"] = tv[(t.recipe, t.seed)]
+    for name, key in (("im", lambda t: t.fitness), ("tv", lambda t: tv[(t.recipe, t.seed)])):
+        best = max(trials, key=key)                                   # ties -> earliest candidate
+        s[f"deployed_acc_{name}"] = evaluator.true_accuracy(env, best.recipe, best.seed)
+    return s
+
+
+def score_visit(method, evaluator, stream, env, carried, trials):
+    """Scores one visit the way its method deploys."""
+    if method == "RPST-DA":
+        return score_rpstda(evaluator, stream, env, trials)
+    return score(evaluator, stream, env, carried, trials)
 
 
 def summarize(results):
@@ -198,7 +226,7 @@ def main():
     for run_seed in RUN_SEEDS[:args.runs]:
         for m in methods:
             t = time.time()
-            envs = [score(evaluator, stream, env, carried, trials) for env, (carried, trials)
+            envs = [score_visit(m, evaluator, stream, env, carried, trials) for env, (carried, trials)
                     in zip(stream.environments, run_method(m, stream, evaluator, run_seed))]
             results[m][str(run_seed)] = envs
             print(f"run {run_seed:4d} {m:11s} deployed acc {[round(e['deployed_acc'] * 100, 1) for e in envs]} "

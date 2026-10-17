@@ -1,11 +1,12 @@
 import numpy as np
 import pytest
 
-from tevc import baselines
+from tevc import baselines, rpstda
 from tevc.agent import PRIOR
 from tevc.optimizers import Trial
 from tevc.recipe import Recipe
-from tevc.run_stream import AGENT_VARIANTS, DFIDEvaluator, OracleEvaluator, main, report, run_level_tests, run_method, score
+from tevc.run_stream import (AGENT_VARIANTS, EXTRA, DFIDEvaluator, OracleEvaluator, main, report, run_level_tests,
+                             run_method, score, score_rpstda)
 from tevc.stream import Environment, Stream
 
 E800, E1000 = Environment("fake@800", 800.0, {}, {}), Environment("fake@1000", 1000.0, {}, {})
@@ -92,3 +93,28 @@ def test_ottawa_runs_only_through_the_frozen_protocol(monkeypatch):
     monkeypatch.setattr("sys.argv", ["run_stream", "--dataset", "ottawa"])
     with pytest.raises(SystemExit, match="tevc.confirmatory"):
         main()
+
+
+def test_score_deploys_with_a_pluggable_rule(fake_evaluator):
+    trials = [_trial(0.9, 0.1), _trial(0.2, 0.5), _trial(0.5, 0.3)]
+    s = score(fake_evaluator, STREAM, E800, [], trials, budget=3, deploy=lambda pool: pool[0])
+    assert np.allclose(s["curve"], [0.1, 0.1, 0.1])
+
+
+def test_rpstda_visits_store_tv_accuracy_and_the_single_score_deployments(fake_evaluator):
+    trials = rpstda.search(fake_evaluator, E800, 7)
+
+    def tv(t):
+        return fake_evaluator.tv_accuracy(E800, t.recipe, t.seed)
+
+    s = score_rpstda(fake_evaluator, STREAM, E800, trials)
+    assert s["n_evals"] == 30 and s["deployed"]["kind"] == "RPSTDA"
+    assert s["deployed"]["seed"] == rpstda.rank_deploy(tv)(trials).seed
+    assert [r["tv_acc"] for r in s["trials"]] == [tv(t) for t in trials]
+    assert {"deployed_acc_im", "deployed_acc_tv"} <= set(s)
+
+
+def test_rpstda_offers_the_same_candidates_in_every_environment(fake_evaluator):
+    assert "RPST-DA" in EXTRA and "RPST-DA" not in baselines.METHODS
+    per_env = [[(t.recipe, t.seed) for t in trials] for _, trials in run_method("RPST-DA", STREAM, fake_evaluator, 7)]
+    assert per_env[0] == per_env[1] == per_env[2] and len(per_env[0]) == 30
