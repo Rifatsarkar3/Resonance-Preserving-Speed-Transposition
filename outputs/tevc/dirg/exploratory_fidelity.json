@@ -1,0 +1,138 @@
+{
+ "note": "exploratory, after the DIRG verdict",
+ "library_rpm": 16690.605875356858,
+ "environments": {
+  "dirg@400Hz": {
+   "speed_ratio": 1.3487351816612771,
+   "operators": {
+    "untransposed": {
+     "band_error": 0.8654661043785479,
+     "envelope_corr": 0.23196543470291134,
+     "ringdown_error": 0.7319745664309093,
+     "kurtosis_error": 0.10257805923864802,
+     "feature_mmd": 0.34044534153832084
+    },
+    "beta=0 n_fft=128 (RPST)": {
+     "band_error": 0.8568217905095213,
+     "envelope_corr": 0.3258971628880953,
+     "ringdown_error": 0.6688557759782999,
+     "kurtosis_error": 0.1516267486297378,
+     "feature_mmd": 0.3374046412792072
+    },
+    "beta=0 n_fft=256 (RPST)": {
+     "band_error": 0.8643090570653531,
+     "envelope_corr": 0.2783956110336231,
+     "ringdown_error": 0.7678731447701495,
+     "kurtosis_error": 0.17988481745247714,
+     "feature_mmd": 0.328791278249454
+    },
+    "beta=1 (resampling)": {
+     "band_error": 1.785896132916728,
+     "envelope_corr": 0.289000933618396,
+     "ringdown_error": 0.6688557759782999,
+     "kurtosis_error": 0.09317623520534947,
+     "feature_mmd": 0.901973243378767
+    }
+   }
+  },
+  "dirg@500Hz": {
+   "speed_ratio": 1.6979634397262289,
+   "operators": {
+    "untransposed": {
+     "band_error": 1.0811072414820282,
+     "envelope_corr": 0.25899379656743315,
+     "ringdown_error": 0.7730698721268554,
+     "kurtosis_error": 0.1198366711407758,
+     "feature_mmd": 0.3505954812213964
+    },
+    "beta=0 n_fft=128 (RPST)": {
+     "band_error": 1.1110580165057415,
+     "envelope_corr": 0.3806520329316395,
+     "ringdown_error": 1.023835430900734,
+     "kurtosis_error": 0.15162455902573305,
+     "feature_mmd": 0.35450891312428134
+    },
+    "beta=0 n_fft=256 (RPST)": {
+     "band_error": 1.087506814681857,
+     "envelope_corr": 0.35308252864912915,
+     "ringdown_error": 1.221870168484433,
+     "kurtosis_error": 0.17453870659675172,
+     "feature_mmd": 0.3443542428576545
+    },
+    "beta=1 (resampling)": {
+     "band_error": 1.7807103907489843,
+     "envelope_corr": 0.28726707763654774,
+     "ringdown_error": 0.8500683273477895,
+     "kurtosis_error": 0.09752883279668427,
+     "feature_mmd": 0.8009126964921163
+    }
+   }
+  },
+  "dirg@200Hz": {
+   "speed_ratio": 0.648419976262373,
+   "operators": {
+    "untransposed": {
+     "band_error": 0.8004338013934884,
+     "envelope_corr": 0.28366558089031624,
+     "ringdown_error": 0.3359060055228945,
+     "kurtosis_error": 0.1461360089191039,
+     "feature_mmd": 0.16619318855023746
+    },
+    "beta=0 n_fft=128 (RPST)": {
+     "band_error": 0.807969451035256,
+     "envelope_corr": 0.526388120180649,
+     "ringdown_error": 0.4708256095861995,
+     "kurtosis_error": 0.20897050353212568,
+     "feature_mmd": 0.1627536582214517
+    },
+    "beta=0 n_fft=256 (RPST)": {
+     "band_error": 0.7981617207317298,
+     "envelope_corr": 0.44008267943217244,
+     "ringdown_error": 0.4708256095861995,
+     "kurtosis_error": 0.2442057388728745,
+     "feature_mmd": 0.1541517293972452
+    },
+    "beta=1 (resampling)": {
+     "band_error": 4.76949310707346,
+     "envelope_corr": 0.40878490373528653,
+     "ringdown_error": 0.4668024872585233,
+     "kurtosis_error": 0.13641454124302635,
+     "feature_mmd": 1.1768391411167518
+    }
+   }
+  },
+  "dirg@100Hz": {
+   "speed_ratio": 0.3153356563576432,
+   "operators": {
+    "untransposed": {
+     "band_error": 1.3567697085341521,
+     "envelope_corr": 0.2550420416821418,
+     "ringdown_error": 0.42973059418964965,
+     "kurtosis_error": 0.26218528702732424,
+     "feature_mmd": 0.5708145760636079
+    },
+    "beta=0 n_fft=128 (RPST)": {
+     "band_error": 1.3418389554462424,
+     "envelope_corr": 0.6523835980147972,
+     "ringdown_error": 0.5096749230862648,
+     "kurtosis_error": 0.3157911341525855,
+     "feature_mmd": 0.5346569696824814
+    },
+    "beta=0 n_fft=256 (RPST)": {
+     "band_error": 1.341470858392991,
+     "envelope_corr": 0.619564729680328,
+     "ringdown_error": 0.6086941203442221,
+     "kurtosis_error": 0.3476263058226666,
+     "feature_mmd": 0.5392646053668557
+    },
+    "beta=1 (resampling)": {
+     "band_error": 9.582910795588491,
+     "envelope_corr": 0.3589245538568843,
+     "ringdown_error": 0.5901424386310818,
+     "kurtosis_error": 0.22497206157548252,
+     "feature_mmd": 1.5570930912907106
+    }
+   }
+  }
+ }
+}
