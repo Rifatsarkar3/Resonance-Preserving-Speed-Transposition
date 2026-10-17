@@ -62,3 +62,10 @@ def test_dirg_stream_layout_and_disjointness():
         assert np.bincount(env.U["y"]).tolist() == np.bincount(env.T["y"]).tolist() == [DIRG.cap_eval] * 7
         assert 0.85 * hz * 60 <= env.rpm <= hz * 60
     assert_disjoint(s)
+
+
+def test_headroom_compares_the_deployed_model_with_the_best_evaluated_candidate():
+    from tevc.probes.dirg_diagnostics import visit_headroom
+    entry = {"deployed_acc": 0.3, "trials": [{"acc": 0.2}, {"acc": 0.6}, {"acc": 0.3}]}
+    assert visit_headroom(entry) == (0.3, 0.6)
+    assert visit_headroom({"deployed_acc": 0.7, "trials": [{"acc": 0.2}]}) == (0.7, 0.7)     # carried model deployed
