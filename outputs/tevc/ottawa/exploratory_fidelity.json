@@ -1,0 +1,105 @@
+{
+ "note": "exploratory, after the DIRG verdict",
+ "library_rpm": 904.1015625,
+ "environments": {
+  "ottawa@16-19Hz": {
+   "speed_ratio": 1.1642903434867142,
+   "operators": {
+    "untransposed": {
+     "band_error": 0.36403734434282614,
+     "envelope_corr": 0.6224729209862377,
+     "ringdown_error": 0.16438962762805626,
+     "kurtosis_error": 0.22053366369383204,
+     "feature_mmd": 0.020966814324394067
+    },
+    "beta=0 n_fft=128 (RPST)": {
+     "band_error": 0.2995380433773997,
+     "envelope_corr": 0.8560900497096877,
+     "ringdown_error": 0.09946556015901234,
+     "kurtosis_error": 0.47930048245424606,
+     "feature_mmd": 0.06468444401849582
+    },
+    "beta=0 n_fft=256 (RPST)": {
+     "band_error": 0.31345871709475526,
+     "envelope_corr": 0.8739086913394605,
+     "ringdown_error": 0.10691662223751024,
+     "kurtosis_error": 0.5487148993724343,
+     "feature_mmd": 0.11424198639129812
+    },
+    "beta=1 (resampling)": {
+     "band_error": 0.9343706434660113,
+     "envelope_corr": 0.8520256730753714,
+     "ringdown_error": 0.27011455119468514,
+     "kurtosis_error": 0.1048921484707539,
+     "feature_mmd": 0.12848753559139214
+    }
+   }
+  },
+  "ottawa@19-22Hz": {
+   "speed_ratio": 1.362605314322748,
+   "operators": {
+    "untransposed": {
+     "band_error": 0.647352472065238,
+     "envelope_corr": 0.5186225500319974,
+     "ringdown_error": 0.21497971815595313,
+     "kurtosis_error": 0.3604080646002985,
+     "feature_mmd": 0.0440385179723235
+    },
+    "beta=0 n_fft=128 (RPST)": {
+     "band_error": 0.5941682292446933,
+     "envelope_corr": 0.8799710247739764,
+     "ringdown_error": 0.22017196401787215,
+     "kurtosis_error": 0.42387324973320517,
+     "feature_mmd": 0.07485934239836378
+    },
+    "beta=0 n_fft=256 (RPST)": {
+     "band_error": 0.6062840168195222,
+     "envelope_corr": 0.8641064452921461,
+     "ringdown_error": 0.11471864846574924,
+     "kurtosis_error": 0.5472428003818741,
+     "feature_mmd": 0.12413899395524008
+    },
+    "beta=1 (resampling)": {
+     "band_error": 1.1036495716516026,
+     "envelope_corr": 0.8409199083267189,
+     "ringdown_error": 0.41303893007940945,
+     "kurtosis_error": 0.23472129125039923,
+     "feature_mmd": 0.1931408778504936
+    }
+   }
+  },
+  "ottawa@22-25Hz": {
+   "speed_ratio": 1.5333765392093324,
+   "operators": {
+    "untransposed": {
+     "band_error": 0.869568249159095,
+     "envelope_corr": 0.5937810626154821,
+     "ringdown_error": 0.2291596190961565,
+     "kurtosis_error": 0.397187495248739,
+     "feature_mmd": 0.06453985534605522
+    },
+    "beta=0 n_fft=128 (RPST)": {
+     "band_error": 0.7975077149768246,
+     "envelope_corr": 0.8515484055092974,
+     "ringdown_error": 0.2930421834715423,
+     "kurtosis_error": 0.389854032403965,
+     "feature_mmd": 0.08866792505303167
+    },
+    "beta=0 n_fft=256 (RPST)": {
+     "band_error": 0.7760970040299151,
+     "envelope_corr": 0.8639515223371206,
+     "ringdown_error": 0.20316334797980157,
+     "kurtosis_error": 0.536858921322993,
+     "feature_mmd": 0.13594074504918519
+    },
+    "beta=1 (resampling)": {
+     "band_error": 1.2624214196293941,
+     "envelope_corr": 0.8750492016972629,
+     "ringdown_error": 0.49954471431508657,
+     "kurtosis_error": 0.29029760352052075,
+     "feature_mmd": 0.26635843212910826
+    }
+   }
+  }
+ }
+}
