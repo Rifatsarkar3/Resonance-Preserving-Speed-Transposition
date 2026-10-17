@@ -225,3 +225,12 @@ def test_tv_accuracy_trains_when_needed_and_is_undefined_for_other_candidates(tm
         assert "pV" not in z.files
     with pytest.raises(TypeError):
         ev.tv_accuracy(env, RECIPE, 1)
+
+
+def test_tv_accuracy_is_class_balanced(tmp_path):
+    V = {"W": np.zeros((4, 1000), np.float32), "y": np.array([0, 0, 0, 1])}       # fake predictions: 0, 0, 1, 1
+    ev = RecipeEvaluator(_stream(), epochs=1, cache_dir=tmp_path, train_fn=_fake_train, predict_fn=_fake_predict,
+                         weights_fn=_uniform_weights, baseline_fn=lambda *a: ({}, None),
+                         view_fn=lambda c, s, e: (lambda W: W), validation_fn=lambda c, s, e: V)
+    env = ev.stream.environments[0]
+    assert np.isclose(ev.tv_accuracy(env, CANDIDATE, 1), (2 / 3 + 1) / 2)          # plain accuracy would be 3 / 4

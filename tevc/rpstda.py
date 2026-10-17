@@ -49,15 +49,27 @@ def train_windows(stream, fraction=TRAIN_FRACTION):
     return {k: np.asarray(v)[keep] for k, v in lib.items()}
 
 
+def _balanced(y):
+    """Indices keeping every class at the smallest class's count, evenly thinned in order, so that every synthesised
+    speed keeps its share of each class."""
+    groups = [np.flatnonzero(y == c) for c in np.unique(y)]
+    n = min(len(g) for g in groups)
+    return np.sort(np.concatenate([g[np.linspace(0, len(g) - 1, n).round().astype(int)] for g in groups]))
+
+
 def source_set(config, stream, env):
     """Labelled source windows (W, y): the train-part library windows plus, unless copies = 0, RPST copies (beta = 0)
-    of the train-part records at the config's intermediate speeds between the library and env."""
+    of the train-part records at the config's intermediate speeds between the library and env. The copies are thinned
+    to equal counts per class (a longer healthy record would otherwise give it more copies, as on JNU)."""
     lib = train_windows(stream)
     if config.copies == 0:
         return lib["W"], lib["y"]
     train_entries, _ = split_entries(stream.library_entries)
     recipe = Recipe(config.n_targets, config.q_lo, config.q_hi, config.n_fft, 0.0, config.copies, True)
-    return training_set(recipe, stream.dataset, train_entries, lib, stream.library_rpm, env.rpm, stream.src_rpm_of)
+    W, y = training_set(recipe, stream.dataset, train_entries, lib, stream.library_rpm, env.rpm, stream.src_rpm_of)
+    n_lib = len(lib["y"])                                   # training_set puts the real windows first
+    keep = np.r_[np.arange(n_lib), n_lib + _balanced(y[n_lib:])]
+    return W[keep], y[keep]
 
 
 def train(config, stream, env, seed, model_name, epochs):

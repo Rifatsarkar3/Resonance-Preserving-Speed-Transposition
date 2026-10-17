@@ -169,8 +169,9 @@ class RecipeEvaluator:
         return float((pT.argmax(axis=1) == env.T["y"]).mean())
 
     def tv_accuracy(self, env, config, seed):
-        """Label-free selection score of RPST-DA: accuracy of that trained model on the transposed validation set,
-        whose labels are the library's; trains and caches the model when needed."""
+        """Label-free selection score of RPST-DA: class-balanced accuracy (mean recall over its classes) of that
+        trained model on the transposed validation set, whose labels are the library's; trains and caches the model
+        when needed."""
         V = self.validation(env, config)
         if V is None:
             raise TypeError(f"no transposed validation set is defined for {config!r}")
@@ -178,4 +179,5 @@ class RecipeEvaluator:
         if not path.exists():
             self.probabilities(env, config, seed)
         with np.load(path) as z:
-            return float((z["pV"].argmax(axis=1) == V["y"]).mean())
+            pred = z["pV"].argmax(axis=1)
+        return float(np.mean([(pred[V["y"] == c] == c).mean() for c in np.unique(V["y"])]))

@@ -80,6 +80,14 @@ def test_copies_come_from_the_train_part_at_intermediate_speeds(monkeypatch):
     assert {(c[0], c[2], c[3]) for c in calls} == {(600.0, 0.0, 128)}
 
 
+def test_copies_are_balanced_across_classes_when_records_differ_in_length():
+    stream, env = _stream([_noise(0), _noise(1, n=60_000)])           # class 1's record is shorter
+    lib = rd.train_windows(stream)
+    W, y = rd.source_set(RPSTDAConfig("CDAN", 1e-3, 1.0, 2, 0.3, 0.8, 256, 80), stream, env)
+    n_lib = len(lib["y"])
+    assert np.array_equal(W[:n_lib], lib["W"]) and np.bincount(y[n_lib:]).tolist() == [30, 30]   # 18 + 12 for class 1
+
+
 def _ringing(n, start, period, f_res=1000.0, tau=32.0):
     """Impacts every `period` samples from `start` on, each ringing at f_res Hz (decay tau samples), over a 2 % noise
     floor (without one the phase vocoder's phase drifts through the silent gaps and every other impact cancels)."""
