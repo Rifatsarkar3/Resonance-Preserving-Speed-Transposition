@@ -24,7 +24,7 @@ BEARING = ("H", "B", "IR", "OR")
 GEOMETRY = {"N_balls": 8, "d_mm": 7.94, "D_mm": 34.57, "alpha_deg": 0.0}
 SPEED_BAND = (0.85, 1.05)       # frozen 2026-10-18 by the library-only rule (tevc.probes.lee_speed_band;
                                 # outputs/tevc/lee_speed_band.json): library 1.001-1.004 x nominal, the default
-TARGETS_RELEASED = False        # True only from the commit that freezes the author-approved Lee protocol
+TARGETS_RELEASED = True         # since the commit that froze the author-approved Lee protocol (2026-10-18)
 SHA256 = {                      # Mendeley's published manifest (public API, 2026-10-18)
     "H_H_16_6204_600.mat": "1508685ec732475044573bde40edde83cd7d0f6897d4df38e98d40ae88e740f6",
     "H_B_16_6204_600.mat": "e0efe1a08af9acee2d80adfc35cb2b612771b497b68b5d2fc0da9200633d144a",
@@ -95,6 +95,7 @@ class LEE:
     cap_fit, cap_eval = 80, 80
     n_classes = 4
     geometry = GEOMETRY
+    frame_scale = 0.25          # operator frames in physical time: 16 kHz is a quarter of PU's 64 kHz (spec §4)
     _span = {"library": (0.0, 1.0), "U": (0.0, 0.5), "T": (0.5, 1.0)}
 
     @classmethod

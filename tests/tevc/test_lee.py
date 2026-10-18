@@ -3,10 +3,15 @@ import pytest
 from tevc import lee_data
 
 
-def test_target_records_stay_unread_until_the_protocol_is_approved():
-    assert not lee_data.TARGETS_RELEASED
+def test_target_records_are_locked_while_the_protocol_is_unapproved(monkeypatch):
+    monkeypatch.setattr(lee_data, "TARGETS_RELEASED", False)
     with pytest.raises(PermissionError, match="approves"):
         lee_data.record(0, 1200)
+
+
+def test_frames_on_lee_keep_the_development_durations():
+    from tevc.recipe import frame
+    assert lee_data.LEE.frame_scale == 0.25 and frame(256, lee_data.LEE) == 64 and frame(64, lee_data.LEE) == 16
 
 
 def test_file_names_follow_the_published_convention():
