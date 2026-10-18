@@ -6,8 +6,10 @@ from typing import Callable, Optional
 
 import numpy as np
 
+from tevc import lee_data
 from tevc.datasets import JNU, PU, make_windows
 from tevc.dirg_data import DIRG, estimate_speed_hz
+from tevc.lee_data import LEE
 from tevc.ottawa_data import OTTAWA
 
 JNU_LIBRARY_CAP = 40      # first half of a 600-rpm fault recording yields ~40 windows: keep classes balanced
@@ -17,6 +19,8 @@ OTTAWA_SEQUENCE = ((16.0, 19.0), (19.0, 22.0), (22.0, 25.0), (19.0, 22.0), (16.0
 MIN_PER_CLASS = 10
 DIRG_LIBRARY_HZ = 300
 DIRG_SEQUENCE = (400, 500, 400, 200, 100)      # nominal Hz; every ratio to the library is >= 1.3 or <= 1 / 1.3
+LEE_LIBRARY_RPM = 800
+LEE_SEQUENCE = (1200, 1600, 1200, 600, 1400)   # nominal rpm; every ratio to the library is >= 1.3 or <= 1 / 1.3
 
 
 @dataclass(frozen=True, eq=False)
@@ -93,6 +97,24 @@ def dirg_stream(library_hz=DIRG_LIBRARY_HZ, sequence=DIRG_SEQUENCE):
                                _windows(DIRG, DIRG.entries("T", hz), DIRG.cap_eval))
     return Stream(DIRG, lib_entries, library, 60.0 * estimate_speed_hz(library["W"], DIRG.fs, library_hz),
                   tuple(envs[h] for h in sequence))
+
+
+def lee_stream(library_rpm=LEE_LIBRARY_RPM, sequence=LEE_SEQUENCE):
+    """MSSP spec §4: library = the whole 800-rpm records; U = first 40 s, T = last 40 s of each target record. Speeds
+    (rpm) are estimated label-free from the library windows and from each U buffer, in the band frozen from the
+    library records alone (tevc.probes.lee_speed_band)."""
+    band = lee_data.SPEED_BAND
+    if band is None:
+        raise RuntimeError("Lee speed band not frozen: run tevc.probes.lee_speed_band first (spec §4)")
+    lib_entries = LEE.entries("library", library_rpm)
+    library = _windows(LEE, lib_entries, LEE.cap_fit)
+    envs = {}
+    for rpm in dict.fromkeys(sequence):
+        U = _windows(LEE, LEE.entries("U", rpm), LEE.cap_eval)
+        envs[rpm] = Environment(f"lee@{rpm}", 60.0 * estimate_speed_hz(U["W"], LEE.fs, rpm / 60.0, band), U,
+                                _windows(LEE, LEE.entries("T", rpm), LEE.cap_eval))
+    return Stream(LEE, lib_entries, library, 60.0 * estimate_speed_hz(library["W"], LEE.fs, library_rpm / 60.0, band),
+                  tuple(envs[r] for r in sequence))
 
 
 def _intervals(w):

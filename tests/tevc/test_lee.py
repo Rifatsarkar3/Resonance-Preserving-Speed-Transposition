@@ -40,3 +40,30 @@ def test_prominence_finds_a_clean_shaft_tone():
     t = np.arange(128_000) / 16000.0                                   # 8 s segments: main lobe +-0.25 Hz
     W = np.stack([np.sin(2 * np.pi * 13.0 * t + p) for p in np.linspace(0, 3, 5)])
     assert prominence(W, 16000.0, 800 / 60.0) > 10
+
+
+def _fake_record(cls, rpm):
+    """10 s with the shaft tone at 1.02 x nominal over noise; no file is read."""
+    import numpy as np
+    t = np.arange(160_000) / lee_data.FS
+    noise = np.random.default_rng([cls, rpm]).standard_normal(len(t))
+    return (np.sin(2 * np.pi * 1.02 * rpm / 60.0 * t) + 0.3 * noise).astype(np.float32)
+
+
+def test_lee_stream_layout_speeds_and_disjointness(monkeypatch):
+    from tevc.stream import LEE_SEQUENCE, assert_disjoint, lee_stream
+    monkeypatch.setattr(lee_data, "record", _fake_record)
+    monkeypatch.setattr(lee_data, "SPEED_BAND", (0.85, 1.05))
+    s = lee_stream()
+    assert [e.name for e in s.environments] == [f"lee@{r}" for r in LEE_SEQUENCE]
+    assert s.environments[0] is s.environments[2]
+    assert abs(s.library_rpm / (1.02 * 800) - 1) < 0.01
+    assert all(abs(env.rpm / (1.02 * rpm) - 1) < 0.01 for env, rpm in zip(s.environments, LEE_SEQUENCE))
+    assert_disjoint(s)
+
+
+def test_lee_stream_needs_the_frozen_speed_band(monkeypatch):
+    from tevc.stream import lee_stream
+    monkeypatch.setattr(lee_data, "SPEED_BAND", None)
+    with pytest.raises(RuntimeError, match="lee_speed_band"):
+        lee_stream()
