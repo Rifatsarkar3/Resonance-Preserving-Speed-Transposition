@@ -1,0 +1,39 @@
+{
+ "note": "800-rpm library records only; no target record read",
+ "rule": "Per bearing class, the shaft speed of its 800-rpm library record is estimated (tevc.dirg_data.estimate_speed_hz) on\nits library windows (8000 samples, hop 4000, at most 80) with a wide band, 0.70-1.30 x nominal; r_c = estimate /\nnominal. SPEED_BAND = (0.85, 1.05), the spec default, if 0.88 <= min r_c and max r_c <= 1.02 (every library peak at\nleast 0.03 inside it); otherwise (min r_c - 0.07, max r_c + 0.07). Reported alongside: each class's estimate with the\nchosen band (it must equal the wide-band one), and, on ten 8 s segments of the record (a 0.5 s Hann window's main\nlobe, +-4 Hz, is as wide as the band at 13.3 Hz), a cross-check estimate and the peak prominence (peak / median\namplitude in the wide band).",
+ "per_class": {
+  "H": {
+   "windows": 80,
+   "r_wide": 1.001155953980597,
+   "r_8s": 1.0013618433143303,
+   "prominence_8s": 345.16463781026494,
+   "r_band": 1.001155953980597
+  },
+  "B": {
+   "windows": 80,
+   "r_wide": 1.0039033590361885,
+   "r_8s": 1.003599871218949,
+   "prominence_8s": 218.93211875218202,
+   "r_band": 1.0039033590361885
+  },
+  "IR": {
+   "windows": 80,
+   "r_wide": 1.001536961026844,
+   "r_8s": 1.0014709357760714,
+   "prominence_8s": 393.0228325190295,
+   "r_band": 1.001536961026844
+  },
+  "OR": {
+   "windows": 80,
+   "r_wide": 1.0027527973326702,
+   "r_8s": 1.0025859165475093,
+   "prominence_8s": 301.40539165661824,
+   "r_band": 1.0027527973326702
+  }
+ },
+ "band": [
+  0.85,
+  1.05
+ ],
+ "library_rpm": 801.722885633983
+}

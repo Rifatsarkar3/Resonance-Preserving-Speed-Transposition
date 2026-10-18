@@ -22,7 +22,8 @@ SPEEDS_RPM = (600, 800, 1000, 1200, 1400, 1600)
 LIBRARY_RPM = 800
 BEARING = ("H", "B", "IR", "OR")
 GEOMETRY = {"N_balls": 8, "d_mm": 7.94, "D_mm": 34.57, "alpha_deg": 0.0}
-SPEED_BAND = None               # frozen from the library records only by tevc.probes.lee_speed_band
+SPEED_BAND = (0.85, 1.05)       # frozen 2026-10-18 by the library-only rule (tevc.probes.lee_speed_band;
+                                # outputs/tevc/lee_speed_band.json): library 1.001-1.004 x nominal, the default
 TARGETS_RELEASED = False        # True only from the commit that freezes the author-approved Lee protocol
 SHA256 = {                      # Mendeley's published manifest (public API, 2026-10-18)
     "H_H_16_6204_600.mat": "1508685ec732475044573bde40edde83cd7d0f6897d4df38e98d40ae88e740f6",
