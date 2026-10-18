@@ -51,3 +51,17 @@ def test_training_set_uses_per_entry_source_speed():
 
     W, y = training_set(r, _DS, _entries(), _library(), 600, 1000, src_rpm_of=src_rpm_of)
     assert len(y) == 16 and set(seen) == {"r0", "r1"}
+
+
+def test_operator_frames_scale_with_a_dataset_declared_frame_scale(monkeypatch):
+    from tevc.recipe import frame
+
+    class _Slow(_DS):
+        frame_scale = 0.25                                  # recorded at a quarter of the development rate
+
+    assert frame(256, _DS) == 256 and frame(256, _Slow) == 64 and frame(64, _Slow) == 16
+    seen = []
+    monkeypatch.setattr("tevc.synthesis.transpose", lambda y, s0, t, beta, n_fft: seen.append(n_fft) or y)
+    training_set(Recipe(1, 1.0, 1.0, 512, 0.0, 2, True), _Slow, _entries(), _library(), 600, 1000)
+    training_set(Recipe(1, 1.0, 1.0, 512, 0.0, 2, True), _DS, _entries(), _library(), 600, 1000)
+    assert set(seen[:2]) == {128} and set(seen[2:]) == {512}

@@ -118,3 +118,11 @@ def test_rpstda_offers_the_same_candidates_in_every_environment(fake_evaluator):
     assert "RPST-DA" in EXTRA and "RPST-DA" not in baselines.METHODS
     per_env = [[(t.recipe, t.seed) for t in trials] for _, trials in run_method("RPST-DA", STREAM, fake_evaluator, 7)]
     assert per_env[0] == per_env[1] == per_env[2] and len(per_env[0]) == 30
+
+
+def test_the_no_copies_arm_is_scored_by_the_same_rule(fake_evaluator):
+    from tevc.run_stream import RPSTDA_ARMS, score_visit
+    assert RPSTDA_ARMS == {"RPST-DA": True, "RPST-DA-NC": False} and "RPST-DA-NC" in EXTRA
+    visits = run_method("RPST-DA-NC", STREAM, fake_evaluator, 7)
+    s = score_visit("RPST-DA-NC", fake_evaluator, STREAM, E800, *visits[0])
+    assert s["n_evals"] == 30 and s["deployed"]["copies"] == 0 and "deployed_acc_im" in s

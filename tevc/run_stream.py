@@ -27,7 +27,8 @@ from tevc.stream import assert_disjoint, jnu_stream, ottawa_stream, pu_stream
 STREAMS = {"jnu": jnu_stream, "pu": pu_stream, "ottawa": ottawa_stream}
 METHODS = ("STATIC-NONE", "STATIC-H2", "RANDOM", "GA-RESTART", "AGENT", "AGENT-B1")
 EXTRA = ("BO", "WARM-TRANSFER", "ORACLE-FITNESS", "AGENT-NOMEM", "AGENT-NOSURR", "AGENT-NOEVO", "AGENT-NOPRIOR",
-         "AGENT-DFID") + baselines.METHODS + ("RPST-DA",)
+         "AGENT-DFID") + baselines.METHODS + ("RPST-DA", "RPST-DA-NC")
+RPSTDA_ARMS = {"RPST-DA": True, "RPST-DA-NC": False}      # method -> trains with RPST copies (NC: the no-copies arm)
 AGENT_VARIANTS = {"AGENT": {}, "AGENT-B1": {"beta": 1.0}, "AGENT-NOMEM": {"memory": False},
                   "AGENT-NOSURR": {"surrogate": False}, "AGENT-NOEVO": {"evolve": False},
                   "AGENT-NOPRIOR": {"prior": False}, "AGENT-DFID": {}}
@@ -101,8 +102,8 @@ def run_method(method, stream, evaluator, run_seed):
             out.append(([], trials))
         elif method in baselines.METHODS:
             out.append(([], baselines.search(method, evaluator, env, run_seed)))
-        elif method == "RPST-DA":
-            out.append(([], rpstda.search(evaluator, env, run_seed)))
+        elif method in RPSTDA_ARMS:
+            out.append(([], rpstda.search(evaluator, env, run_seed, copies=RPSTDA_ARMS[method])))
         else:
             fitness = DFIDEvaluator(evaluator) if method == "AGENT-DFID" else evaluator
             out.append(agent.handle(fitness, env, init_rng, op_rng))
@@ -145,7 +146,7 @@ def score_rpstda(evaluator, stream, env, trials, budget=B):
 
 def score_visit(method, evaluator, stream, env, carried, trials):
     """Scores one visit the way its method deploys."""
-    if method == "RPST-DA":
+    if method in RPSTDA_ARMS:
         return score_rpstda(evaluator, stream, env, trials)
     return score(evaluator, stream, env, carried, trials)
 

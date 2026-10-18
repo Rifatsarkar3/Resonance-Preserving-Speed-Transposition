@@ -7,6 +7,8 @@ B = 30 candidates per environment change, drawn once per run (rng stream [run_se
 streams 0-5); candidate 0 = CDAN at its published setting with the earlier RPST recipe. Deployment: argmax of the mean
 of rank(TV accuracy) and rank(IM) (rank_deploy). The comparators keep the full library.
 """
+from dataclasses import replace
+
 import numpy as np
 from scipy.stats import rankdata
 
@@ -14,7 +16,7 @@ from tevc import synthesis, uda
 from tevc.baselines import LR_RANGE, RPSTDA_Q_MAX, UDA_WEIGHT_RANGE, RPSTDAConfig, _log_uniform
 from tevc.datasets import make_windows
 from tevc.optimizers import B, Trial
-from tevc.recipe import COPIES, N_FFTS, Recipe, training_set
+from tevc.recipe import COPIES, N_FFTS, Recipe, frame, training_set
 
 METHODS = ("DANN", "CDAN")
 TRAIN_FRACTION = 0.8
@@ -80,14 +82,16 @@ def train(config, stream, env, seed, model_name, epochs):
 
 def tv_set(stream, env, cap=None):
     """Transposed validation windows (spec §2.3): the validation part of every library record, RPST-transposed
-    (beta = 0, n_fft 256) from its source speed to env's speed, windowed with hop win / 4, at most `cap` (default
-    cap_fit) per class. Labels are the library's; no target label is read."""
+    (beta = 0, n_fft 256 scaled by the dataset's frame_scale) from its source speed to env's speed, windowed with hop
+    win / 4, at most `cap` (default cap_fit) per class. Labels are the library's; no target label is read."""
     ds = stream.dataset
     _, val = split_entries(stream.library_entries)
 
+    n_fft = frame(TV_N_FFT, ds)
+
     def to_env(label, rec, seg):
         s0 = stream.src_rpm_of(rec) if stream.src_rpm_of else stream.library_rpm
-        return synthesis.transpose(seg, s0, env.rpm, 0.0, TV_N_FFT), env.rpm / s0
+        return synthesis.transpose(seg, s0, env.rpm, 0.0, n_fft), env.rpm / s0
 
     V = make_windows(val, ds.win, ds.win // TV_HOP_DIVISOR, cap or ds.cap_fit, synth=to_env)
     missing = sorted(set(range(ds.n_classes)) - set(V["y"].tolist()))
@@ -96,8 +100,9 @@ def tv_set(stream, env, cap=None):
     return V
 
 
-def sample_configs(run_seed, budget=B):
-    """The run's `budget` candidates: PUBLISHED first, then draws (spec §2.4) from the run's own rng stream."""
+def sample_configs(run_seed, budget=B, copies=True):
+    """The run's `budget` candidates: PUBLISHED first, then draws (spec §2.4) from the run's own rng stream; with
+    copies=False the same draws with copies = 0, the no-copies arm (spec §4)."""
     rng = np.random.default_rng([run_seed, RNG_STREAM])
     out = [PUBLISHED]
     for _ in range(budget - 1):
@@ -107,15 +112,15 @@ def sample_configs(run_seed, budget=B):
         n_targets = int(rng.integers(1, 5))
         q_lo = float(rng.uniform(0.2, RPSTDA_Q_MAX))
         q_hi = float(rng.uniform(q_lo, RPSTDA_Q_MAX))
-        n_fft, copies = int(rng.choice(N_FFTS)), int(rng.choice(COPIES))
-        out.append(RPSTDAConfig(method, lr, weight, n_targets, round(q_lo, 3), round(q_hi, 3), n_fft, copies))
-    return out
+        n_fft, n_copies = int(rng.choice(N_FFTS)), int(rng.choice(COPIES))
+        out.append(RPSTDAConfig(method, lr, weight, n_targets, round(q_lo, 3), round(q_hi, 3), n_fft, n_copies))
+    return out if copies else [replace(c, copies=0) for c in out]
 
 
-def search(evaluator, env, run_seed, budget=B):
+def search(evaluator, env, run_seed, budget=B, copies=True):
     """The run's candidates in order, candidate k trained with seed run_seed * 100 + k; fitness = IM on U."""
     return [Trial(c, run_seed * 100 + k, evaluator.evaluate(env, c, run_seed * 100 + k).fitness)
-            for k, c in enumerate(sample_configs(run_seed, budget))]
+            for k, c in enumerate(sample_configs(run_seed, budget, copies))]
 
 
 def rank_deploy(tv):

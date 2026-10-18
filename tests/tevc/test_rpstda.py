@@ -163,3 +163,21 @@ def test_rank_rule_deploys_the_best_mean_rank_even_when_it_tops_neither_score():
 def test_rank_rule_ties_go_to_the_earliest_candidate():
     pool, tv = [_t(0.9, 0), _t(0.5, 1), _t(0.7, 2)], {0: 0.1, 1: 0.9, 2: 0.7}     # mean ranks 2, 2, 2
     assert rd.rank_deploy(lambda t: tv[t.seed])(pool).seed == 0
+
+
+def test_tv_frames_follow_the_dataset_frame_scale(monkeypatch):
+    class _Slow(_DS):
+        frame_scale = 0.25
+
+    stream, env = _stream([_noise(0), _noise(1)])
+    stream = Stream(_Slow, stream.library_entries, stream.library, stream.library_rpm, stream.environments)
+    seen = []
+    monkeypatch.setattr("tevc.synthesis.transpose", lambda y_, s0, tgt, beta, n_fft: seen.append(n_fft) or y_[::2])
+    rd.tv_set(stream, env)
+    assert set(seen) == {rd.TV_N_FFT // 4}
+
+
+def test_the_no_copies_arm_reuses_the_draws_with_copies_zero():
+    from dataclasses import replace
+    nc = rd.sample_configs(42, copies=False)
+    assert nc == [replace(c, copies=0) for c in rd.sample_configs(42)] and {c.copies for c in nc} == {0}

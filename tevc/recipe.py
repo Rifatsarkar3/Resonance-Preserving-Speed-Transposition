@@ -39,6 +39,14 @@ def sample(rng):
                   keep_real=bool(rng.integers(2)))
 
 
+def frame(n_fft, ds):
+    """Operator frame in samples (phase-vocoder STFT frame or WSOLA segment) for dataset ds. Frames are defined at the
+    development sampling rates; a dataset recorded much slower declares frame_scale (Lee, 16 kHz: 1/4, the durations
+    of PU's 64 kHz frames), so the frame stays short against the fault-impact period, the condition under which time-
+    scale modification re-spaces impacts instead of keeping their rate as a pitch."""
+    return int(round(n_fft * getattr(ds, "frame_scale", 1.0)))
+
+
 def training_set(recipe, ds, library_entries, library_windows, src, tgt, src_rpm_of=None):
     """Windows (N, L) and labels for training a diagnoser under `recipe` (perceived target speed tgt).
 
@@ -47,10 +55,11 @@ def training_set(recipe, ds, library_entries, library_windows, src, tgt, src_rpm
     """
     parts = [library_windows] if recipe.keep_real else []
     operator = synthesis.transpose_wsola if recipe.tsm == "wsola" else synthesis.transpose
+    n_fft = frame(recipe.n_fft, ds)
     for t in recipe.target_rpms(src, tgt):
         def synth(label, rec, sig, t=t):
             s0 = src_rpm_of(rec) if src_rpm_of else src
-            return operator(sig, s0, t, recipe.beta, recipe.n_fft), t / s0
+            return operator(sig, s0, t, recipe.beta, n_fft), t / s0
 
         parts.append(make_windows(library_entries, ds.win, ds.hop, recipe.copies, synth=synth))
     return np.concatenate([p["W"] for p in parts]), np.concatenate([p["y"] for p in parts])
