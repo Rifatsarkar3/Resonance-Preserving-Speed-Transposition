@@ -1,0 +1,612 @@
+{
+ "note": "exploratory M7, after the Lee verdict (3bdb9b9); comparators from the frozen archives",
+ "dataset": "ottawa",
+ "rpstda_commit": "6a4a0407f10e1fa4a7d829929a5ccc5950eeaed8",
+ "summary": {
+  "STATIC-NONE": {
+   "runs": 10,
+   "acc_mean": 0.9507999999999999,
+   "acc_std": 0.007890500617831527,
+   "auc_mean": 0.9507999999999999,
+   "auc_std": 0.007890500617831486,
+   "evals_per_stream": 5.0
+  },
+  "DSR": {
+   "runs": 10,
+   "acc_mean": 0.9352,
+   "acc_std": 0.005158488150611576,
+   "auc_mean": 0.9340016666666665,
+   "auc_std": 0.0075503989960795746,
+   "evals_per_stream": 150.0
+  },
+  "COT": {
+   "runs": 10,
+   "acc_mean": 0.8312999999999999,
+   "acc_std": 0.021341508850125868,
+   "auc_mean": 0.806385,
+   "auc_std": 0.018300864354207677,
+   "evals_per_stream": 150.0
+  },
+  "DANN": {
+   "runs": 10,
+   "acc_mean": 0.9730500000000001,
+   "acc_std": 0.014768970851078304,
+   "auc_mean": 0.9761916666666666,
+   "auc_std": 0.011304621105252982,
+   "evals_per_stream": 150.0
+  },
+  "DEEP-CORAL": {
+   "runs": 10,
+   "acc_mean": 0.97395,
+   "acc_std": 0.005997707895521406,
+   "auc_mean": 0.9722883333333334,
+   "auc_std": 0.005874209403069569,
+   "evals_per_stream": 150.0
+  },
+  "CDAN": {
+   "runs": 10,
+   "acc_mean": 0.9835499999999999,
+   "acc_std": 0.008981787127292694,
+   "auc_mean": 0.981925,
+   "auc_std": 0.007318186060918556,
+   "evals_per_stream": 150.0
+  },
+  "SHOT": {
+   "runs": 10,
+   "acc_mean": 0.9599500000000001,
+   "acc_std": 0.005529240454167314,
+   "auc_mean": 0.9611883333333333,
+   "auc_std": 0.0034954100856217168,
+   "evals_per_stream": 150.0
+  },
+  "AGENT": {
+   "runs": 10,
+   "acc_mean": 0.9498999999999999,
+   "acc_std": 0.0029732137494637083,
+   "auc_mean": 0.9490433333333333,
+   "auc_std": 0.003843451862873031,
+   "evals_per_stream": 150.0
+  },
+  "AGENT-B1": {
+   "runs": 10,
+   "acc_mean": 0.942,
+   "acc_std": 0.0051185935568279235,
+   "auc_mean": 0.939065,
+   "auc_std": 0.005810452506761723,
+   "evals_per_stream": 150.0
+  },
+  "RPST-DA": {
+   "runs": 10,
+   "acc_mean": 0.9777999999999999,
+   "acc_std": 0.00886058688801145,
+   "auc_mean": 0.9761749999999999,
+   "auc_std": 0.007502300573083574,
+   "evals_per_stream": 150.0
+  },
+  "RPST-DA-NC": {
+   "runs": 10,
+   "acc_mean": 0.9796999999999999,
+   "acc_std": 0.006914477565225031,
+   "auc_mean": 0.9793066666666667,
+   "auc_std": 0.006579079638436342,
+   "evals_per_stream": 150.0
+  }
+ },
+ "reliability": {
+  "STATIC-NONE": {
+   "runs": 10,
+   "deployed_acc": 0.9507999999999999,
+   "auc": 0.9507999999999999,
+   "macro_f1": 0.9501101148790605,
+   "missed_fault_rate": 0.0,
+   "false_alarm_rate": 0.02975,
+   "ece": 0.030533030143380168
+  },
+  "DSR": {
+   "runs": 10,
+   "deployed_acc": 0.9352,
+   "auc": 0.9340016666666665,
+   "macro_f1": 0.9329572651256015,
+   "missed_fault_rate": 0.0005,
+   "false_alarm_rate": 0.0085,
+   "ece": 0.06233496034294367
+  },
+  "COT": {
+   "runs": 10,
+   "deployed_acc": 0.8312999999999999,
+   "auc": 0.806385,
+   "macro_f1": 0.820164520256267,
+   "missed_fault_rate": 0.04475,
+   "false_alarm_rate": 0.19749999999999998,
+   "ece": 0.11590226355791093
+  },
+  "DANN": {
+   "runs": 10,
+   "deployed_acc": 0.9730500000000001,
+   "auc": 0.9761916666666666,
+   "macro_f1": 0.9719472321602562,
+   "missed_fault_rate": 0.0,
+   "false_alarm_rate": 0.00125,
+   "ece": 0.02415033609420062
+  },
+  "DEEP-CORAL": {
+   "runs": 10,
+   "deployed_acc": 0.97395,
+   "auc": 0.9722883333333334,
+   "macro_f1": 0.9734961927404594,
+   "missed_fault_rate": 0.0,
+   "false_alarm_rate": 0.0,
+   "ece": 0.017573717592656614
+  },
+  "CDAN": {
+   "runs": 10,
+   "deployed_acc": 0.9835499999999999,
+   "auc": 0.981925,
+   "macro_f1": 0.9833367105368473,
+   "missed_fault_rate": 0.0,
+   "false_alarm_rate": 0.0,
+   "ece": 0.01423193107694386
+  },
+  "SHOT": {
+   "runs": 10,
+   "deployed_acc": 0.9599500000000001,
+   "auc": 0.9611883333333333,
+   "macro_f1": 0.9589641924134312,
+   "missed_fault_rate": 0.0,
+   "false_alarm_rate": 0.0,
+   "ece": 0.03179335365891457
+  },
+  "AGENT": {
+   "runs": 10,
+   "deployed_acc": 0.9498999999999999,
+   "auc": 0.9490433333333333,
+   "macro_f1": 0.9485292766605843,
+   "missed_fault_rate": 0.0,
+   "false_alarm_rate": 0.0025,
+   "ece": 0.04270987574011089
+  },
+  "AGENT-B1": {
+   "runs": 10,
+   "deployed_acc": 0.942,
+   "auc": 0.939065,
+   "macro_f1": 0.9404199996871279,
+   "missed_fault_rate": 0.0,
+   "false_alarm_rate": 0.013500000000000002,
+   "ece": 0.05140471649467946
+  },
+  "RPST-DA": {
+   "runs": 10,
+   "deployed_acc": 0.9777999999999999,
+   "auc": 0.9761749999999999,
+   "macro_f1": 0.9775235172886478,
+   "missed_fault_rate": 0.0,
+   "false_alarm_rate": 0.0005,
+   "ece": 0.019117686712741846
+  },
+  "RPST-DA-NC": {
+   "runs": 10,
+   "deployed_acc": 0.9796999999999999,
+   "auc": 0.9793066666666667,
+   "macro_f1": 0.9794346814576075,
+   "missed_fault_rate": 0.00025,
+   "false_alarm_rate": 0.00125,
+   "ece": 0.016378295892477045
+  }
+ },
+ "tests": [
+  {
+   "first": "RPST-DA",
+   "second": "CDAN",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -0.005750000000000044,
+   "ci95": [
+    -0.01155000000000005,
+    0.000499999999999956
+   ],
+   "wins": 3,
+   "ties": 0,
+   "losses": 7,
+   "p": 0.9453125,
+   "p_holm": 1.0
+  },
+  {
+   "first": "RPST-DA",
+   "second": "CDAN",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -0.005750000000000055,
+   "ci95": [
+    -0.011885041666666735,
+    0.0011702083333333343
+   ],
+   "wins": 2,
+   "ties": 0,
+   "losses": 8,
+   "p": 0.939453125,
+   "p_holm": 1.0
+  },
+  {
+   "first": "RPST-DA",
+   "second": "DANN",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.004749999999999965,
+   "ci95": [
+    -0.00660000000000005,
+    0.0178512500000001
+   ],
+   "wins": 5,
+   "ties": 0,
+   "losses": 5,
+   "p": 0.2607421875,
+   "p_holm": 1.0
+  },
+  {
+   "first": "RPST-DA",
+   "second": "DANN",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -1.666666666666483e-05,
+   "ci95": [
+    -0.009721708333333296,
+    0.011060500000000015
+   ],
+   "wins": 5,
+   "ties": 0,
+   "losses": 5,
+   "p": 0.5009765625,
+   "p_holm": 1.0
+  },
+  {
+   "first": "RPST-DA",
+   "second": "DEEP-CORAL",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.003849999999999998,
+   "ci95": [
+    -0.0023499999999999858,
+    0.011049999999999938
+   ],
+   "wins": 5,
+   "ties": 1,
+   "losses": 4,
+   "p": 0.171875,
+   "p_holm": 1.0
+  },
+  {
+   "first": "RPST-DA",
+   "second": "DEEP-CORAL",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.0038866666666666607,
+   "ci95": [
+    -0.0010983333333333344,
+    0.00951679166666668
+   ],
+   "wins": 5,
+   "ties": 0,
+   "losses": 5,
+   "p": 0.1162109375,
+   "p_holm": 0.9296875
+  },
+  {
+   "first": "RPST-DA",
+   "second": "SHOT",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.017849999999999956,
+   "ci95": [
+    0.010598749999999879,
+    0.024850000000000004
+   ],
+   "wins": 9,
+   "ties": 0,
+   "losses": 1,
+   "p": 0.0029296875,
+   "p_holm": 0.0263671875
+  },
+  {
+   "first": "RPST-DA",
+   "second": "SHOT",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.014986666666666693,
+   "ci95": [
+    0.010138333333333383,
+    0.020133375000000113
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.0009765625,
+   "p_holm": 0.015625
+  },
+  {
+   "first": "RPST-DA",
+   "second": "AGENT",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.0279,
+   "ci95": [
+    0.023149999999999938,
+    0.033250000000000016
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.0009765625,
+   "p_holm": 0.015625
+  },
+  {
+   "first": "RPST-DA",
+   "second": "AGENT",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.02713166666666674,
+   "ci95": [
+    0.022201666666666686,
+    0.032330000000000095
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.0009765625,
+   "p_holm": 0.015625
+  },
+  {
+   "first": "RPST-DA",
+   "second": "DSR",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.042599999999999985,
+   "ci95": [
+    0.036748749999999934,
+    0.04870000000000002
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.0009765625,
+   "p_holm": 0.015625
+  },
+  {
+   "first": "RPST-DA",
+   "second": "DSR",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.042173333333333354,
+   "ci95": [
+    0.03445329166666669,
+    0.05004333333333331
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.0009765625,
+   "p_holm": 0.015625
+  },
+  {
+   "first": "RPST-DA",
+   "second": "STATIC-NONE",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.027000000000000003,
+   "ci95": [
+    0.018999999999999972,
+    0.034550000000000004
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.0009765625,
+   "p_holm": 0.015625
+  },
+  {
+   "first": "RPST-DA",
+   "second": "STATIC-NONE",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.025375000000000026,
+   "ci95": [
+    0.01759629166666665,
+    0.03297337500000006
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.0009765625,
+   "p_holm": 0.015625
+  },
+  {
+   "first": "RPST-DA",
+   "second": "RPST-DA-NC",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -0.0018999999999999794,
+   "ci95": [
+    -0.006599999999999972,
+    0.003150000000000053
+   ],
+   "wins": 4,
+   "ties": 0,
+   "losses": 6,
+   "p": 0.767578125,
+   "p_holm": 1.0
+  },
+  {
+   "first": "RPST-DA",
+   "second": "RPST-DA-NC",
+   "metric": "auc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -0.0031316666666666325,
+   "ci95": [
+    -0.008095083333333255,
+    0.0010400416666666945
+   ],
+   "wins": 4,
+   "ties": 0,
+   "losses": 6,
+   "p": 0.8876953125,
+   "p_holm": 1.0
+  }
+ ],
+ "tv": {
+  "RPST-DA": {
+   "run_level_means": {
+    "rule": 0.9777999999999999,
+    "im_only": 0.9773999999999999,
+    "tv_only": 0.9775000000000003
+   },
+   "spearman_vs_test_acc": {
+    "ottawa@16-19Hz": {
+     "tv": 0.30319966018578165,
+     "im": -0.036315346969823734
+    },
+    "ottawa@19-22Hz": {
+     "tv": 0.21428392309986496,
+     "im": 0.37284908302893216
+    },
+    "ottawa@22-25Hz": {
+     "tv": 0.1032285143598426,
+     "im": 0.18194008320479188
+    }
+   }
+  },
+  "RPST-DA-NC": {
+   "run_level_means": {
+    "rule": 0.9796999999999999,
+    "im_only": 0.9804499999999999,
+    "tv_only": 0.9773999999999999
+   },
+   "spearman_vs_test_acc": {
+    "ottawa@16-19Hz": {
+     "tv": 0.3526139326065707,
+     "im": 0.15636508140281624
+    },
+    "ottawa@19-22Hz": {
+     "tv": 0.3023139429095414,
+     "im": 0.3622202514454773
+    },
+    "ottawa@22-25Hz": {
+     "tv": 0.22178621317823627,
+     "im": 0.37647306053024043
+    }
+   }
+  }
+ },
+ "im_validity": {
+  "RPST-DA": {
+   "ottawa@16-19Hz": {
+    "n": 600,
+    "rho": -0.009783477575558282
+   },
+   "ottawa@19-22Hz": {
+    "n": 600,
+    "rho": 0.3898593910007807
+   },
+   "ottawa@22-25Hz": {
+    "n": 300,
+    "rho": 0.18525357345725077
+   }
+  },
+  "RPST-DA-NC": {
+   "ottawa@16-19Hz": {
+    "n": 600,
+    "rho": 0.17515226854185684
+   },
+   "ottawa@19-22Hz": {
+    "n": 600,
+    "rho": 0.36748609884046407
+   },
+   "ottawa@22-25Hz": {
+    "n": 300,
+    "rho": 0.38173877441017684
+   }
+  },
+  "CDAN": {
+   "ottawa@16-19Hz": {
+    "n": 600,
+    "rho": 0.26099701843502415
+   },
+   "ottawa@19-22Hz": {
+    "n": 600,
+    "rho": 0.3640918333793422
+   },
+   "ottawa@22-25Hz": {
+    "n": 300,
+    "rho": 0.3850865564763952
+   }
+  },
+  "DANN": {
+   "ottawa@16-19Hz": {
+    "n": 600,
+    "rho": 0.2528808777150161
+   },
+   "ottawa@19-22Hz": {
+    "n": 600,
+    "rho": 0.45721822811501595
+   },
+   "ottawa@22-25Hz": {
+    "n": 300,
+    "rho": 0.4344382473751193
+   }
+  },
+  "AGENT": {
+   "ottawa@16-19Hz": {
+    "n": 600,
+    "rho": 0.3707573080063152
+   },
+   "ottawa@19-22Hz": {
+    "n": 600,
+    "rho": 0.7898520187890231
+   },
+   "ottawa@22-25Hz": {
+    "n": 300,
+    "rho": 0.9142251665112492
+   }
+  }
+ },
+ "best_of": {
+  "STATIC-NONE": 0.9507999999999999,
+  "DSR": 0.9602999999999998,
+  "COT": 0.8530499999999999,
+  "DANN": 0.99895,
+  "DEEP-CORAL": 0.9936000000000001,
+  "CDAN": 0.9991,
+  "SHOT": 0.9820499999999999,
+  "AGENT": 0.9715,
+  "AGENT-B1": 0.9622999999999999,
+  "RPST-DA": 0.99795,
+  "RPST-DA-NC": 0.9981499999999999
+ },
+ "selection_loss": {
+  "STATIC-NONE": 0.0,
+  "DSR": 0.02509999999999979,
+  "COT": 0.021749999999999936,
+  "DANN": 0.025899999999999923,
+  "DEEP-CORAL": 0.019650000000000167,
+  "CDAN": 0.015550000000000064,
+  "SHOT": 0.022099999999999786,
+  "AGENT": 0.021600000000000175,
+  "AGENT-B1": 0.020299999999999985,
+  "RPST-DA": 0.020150000000000112,
+  "RPST-DA-NC": 0.018449999999999966
+ }
+}
