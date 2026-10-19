@@ -90,6 +90,31 @@ def _compare(synth, real, ds, f_shaft):
     return out
 
 
+def _to_env(stream, env, beta, n_fft):
+    """make_windows synth: an entry transposed from its source speed (stream.src_rpm_of, else the library speed)."""
+    def synth(label, rec, sig):
+        s0 = stream.src_rpm_of(rec) if stream.src_rpm_of else stream.library_rpm
+        return synthesis.transpose(sig, s0, env.rpm, beta, n_fft), env.rpm / s0
+    return synth
+
+
+def fidelity_by_env(stream, operators, cap=CAP, log=None):
+    """{environment: {"speed_ratio", "operators": {label: metrics}}} for every distinct environment of stream.
+    operators: label -> None (library windows as recorded) or (β, n_fft) for transpose; compared class by class with
+    the environment's real U windows (_compare)."""
+    ds, out = stream.dataset, {}
+    for env in dict.fromkeys(stream.environments):
+        rows = {}
+        for label, op in operators.items():
+            synth = None if op is None else _to_env(stream, env, *op)
+            rows[label] = _compare(make_windows(stream.library_entries, ds.win, ds.hop, cap, synth=synth),
+                                   env.U, ds, env.rpm / 60.0)
+            if log:
+                log(f"{env.name} {label:44s} {json.dumps({k: round(v, 4) for k, v in rows[label].items()})}")
+        out[env.name] = {"speed_ratio": env.rpm / stream.library_rpm, "operators": rows}
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--family", choices=("pv", "wsola"), default="pv")
