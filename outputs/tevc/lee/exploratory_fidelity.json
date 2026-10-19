@@ -1,0 +1,250 @@
+{
+ "note": "exploratory, after the Lee verdict (3bdb9b9)",
+ "library_rpm": 801.722885633983,
+ "environments": {
+  "lee@1200": {
+   "speed_ratio": 1.4953064180765496,
+   "operators": {
+    "untransposed": {
+     "band_error": 1.000734583157293,
+     "envelope_corr": 0.06753955874784673,
+     "ringdown_error": 0.32655070982633916,
+     "kurtosis_error": 0.496235923482482,
+     "feature_mmd": 0.22305485744157194
+    },
+    "beta=0 n_fft=16 (RPST)": {
+     "band_error": 1.1316987299586874,
+     "envelope_corr": 0.6315981557482593,
+     "ringdown_error": 0.29629545282646963,
+     "kurtosis_error": 0.366245502054844,
+     "feature_mmd": 0.2116354061319966
+    },
+    "beta=0 n_fft=32 (RPST)": {
+     "band_error": 1.077829386460068,
+     "envelope_corr": 0.6196038304939048,
+     "ringdown_error": 0.32755268836878937,
+     "kurtosis_error": 0.24283698274461668,
+     "feature_mmd": 0.2106372451206171
+    },
+    "beta=0 n_fft=64 (RPST)": {
+     "band_error": 1.0426868430179739,
+     "envelope_corr": 0.5838507677572926,
+     "ringdown_error": 0.49783994780317165,
+     "kurtosis_error": 0.20649530507742841,
+     "feature_mmd": 0.20181897983739894
+    },
+    "beta=0 n_fft=128 (RPST)": {
+     "band_error": 0.9620950031515687,
+     "envelope_corr": 0.6136567504033865,
+     "ringdown_error": 0.6581468509656943,
+     "kurtosis_error": 0.39560371344255735,
+     "feature_mmd": 0.17530490940990917
+    },
+    "beta=0 n_fft=256 (RPST)": {
+     "band_error": 0.9731447594908789,
+     "envelope_corr": 0.5073153351479435,
+     "ringdown_error": 0.8279778464846879,
+     "kurtosis_error": 0.6243537723840384,
+     "feature_mmd": 0.20004227050541112
+    },
+    "beta=0 n_fft=512 (RPST)": {
+     "band_error": 0.9813888338851664,
+     "envelope_corr": 0.41893411469725883,
+     "ringdown_error": 1.0728898161340248,
+     "kurtosis_error": 0.8078885943504175,
+     "feature_mmd": 0.2674292423489587
+    },
+    "beta=1 (resampling)": {
+     "band_error": 1.7013924806389378,
+     "envelope_corr": 0.6650175137713321,
+     "ringdown_error": 0.3222026245218741,
+     "kurtosis_error": 0.3350254125919949,
+     "feature_mmd": 0.26375645355436794
+    }
+   }
+  },
+  "lee@1600": {
+   "speed_ratio": 1.9969506886321493,
+   "operators": {
+    "untransposed": {
+     "band_error": 0.8377483318748666,
+     "envelope_corr": 0.2981740823593357,
+     "ringdown_error": 0.8711201043951011,
+     "kurtosis_error": 0.41713785641853773,
+     "feature_mmd": 0.10386099333540355
+    },
+    "beta=0 n_fft=16 (RPST)": {
+     "band_error": 0.9423140675770718,
+     "envelope_corr": 0.4889459904921147,
+     "ringdown_error": 0.6203182706944614,
+     "kurtosis_error": 0.29244427326617983,
+     "feature_mmd": 0.1223076772219096
+    },
+    "beta=0 n_fft=32 (RPST)": {
+     "band_error": 0.9260405505695429,
+     "envelope_corr": 0.4819171114175174,
+     "ringdown_error": 0.5933807211671376,
+     "kurtosis_error": 0.1823058121813893,
+     "feature_mmd": 0.10768491498714494
+    },
+    "beta=0 n_fft=64 (RPST)": {
+     "band_error": 0.8768157401079615,
+     "envelope_corr": 0.4589503236833074,
+     "ringdown_error": 0.7205051728576786,
+     "kurtosis_error": 0.20641517567841422,
+     "feature_mmd": 0.09348436820478623
+    },
+    "beta=0 n_fft=128 (RPST)": {
+     "band_error": 0.8589190194088697,
+     "envelope_corr": 0.48140769601689326,
+     "ringdown_error": 1.1282293678565254,
+     "kurtosis_error": 0.43602871696164835,
+     "feature_mmd": 0.08362607236664199
+    },
+    "beta=0 n_fft=256 (RPST)": {
+     "band_error": 0.8734591260834109,
+     "envelope_corr": 0.36242185322478454,
+     "ringdown_error": 1.5019616746175184,
+     "kurtosis_error": 0.6487952529886383,
+     "feature_mmd": 0.09835145956676838
+    },
+    "beta=0 n_fft=512 (RPST)": {
+     "band_error": 0.8672290611775885,
+     "envelope_corr": 0.31693067530108043,
+     "ringdown_error": 1.4225734205881402,
+     "kurtosis_error": 0.8340315617179185,
+     "feature_mmd": 0.1526707427874393
+    },
+    "beta=1 (resampling)": {
+     "band_error": 1.721721491037135,
+     "envelope_corr": 0.5063014439033754,
+     "ringdown_error": 0.7949581462337159,
+     "kurtosis_error": 0.27938117385785805,
+     "feature_mmd": 0.23691056273025535
+    }
+   }
+  },
+  "lee@600": {
+   "speed_ratio": 0.7495687244721648,
+   "operators": {
+    "untransposed": {
+     "band_error": 0.4244456342439674,
+     "envelope_corr": 0.1097884446912299,
+     "ringdown_error": 0.5058707564314633,
+     "kurtosis_error": 0.24406190579176051,
+     "feature_mmd": 0.1956449006660418
+    },
+    "beta=0 n_fft=16 (RPST)": {
+     "band_error": 0.4967085824951495,
+     "envelope_corr": 0.81764230454521,
+     "ringdown_error": 0.6619513854678156,
+     "kurtosis_error": 0.3037935405888295,
+     "feature_mmd": 0.09436365139013025
+    },
+    "beta=0 n_fft=32 (RPST)": {
+     "band_error": 0.46754822996879714,
+     "envelope_corr": 0.8008749819349633,
+     "ringdown_error": 0.7881362640270573,
+     "kurtosis_error": 0.282398973360394,
+     "feature_mmd": 0.08718443723599523
+    },
+    "beta=0 n_fft=64 (RPST)": {
+     "band_error": 0.4435902038260885,
+     "envelope_corr": 0.8040050873641748,
+     "ringdown_error": 0.8885184087617222,
+     "kurtosis_error": 0.2744581402293826,
+     "feature_mmd": 0.08018875599210529
+    },
+    "beta=0 n_fft=128 (RPST)": {
+     "band_error": 0.45013071684614303,
+     "envelope_corr": 0.7910000040338008,
+     "ringdown_error": 1.042660641547534,
+     "kurtosis_error": 0.4384655941909304,
+     "feature_mmd": 0.08483134198003972
+    },
+    "beta=0 n_fft=256 (RPST)": {
+     "band_error": 0.41839070988705707,
+     "envelope_corr": 0.6813235864804721,
+     "ringdown_error": 0.5651598849088904,
+     "kurtosis_error": 0.6101242901379622,
+     "feature_mmd": 0.10499001463208635
+    },
+    "beta=0 n_fft=512 (RPST)": {
+     "band_error": 0.43775033654096984,
+     "envelope_corr": 0.6617890685100313,
+     "ringdown_error": 0.7694532899696933,
+     "kurtosis_error": 0.8341438252894201,
+     "feature_mmd": 0.13680133579537457
+    },
+    "beta=1 (resampling)": {
+     "band_error": 3.1132923361323246,
+     "envelope_corr": 0.8189694769519597,
+     "ringdown_error": 0.583462164804833,
+     "kurtosis_error": 0.25775936544250927,
+     "feature_mmd": 0.6879161431830318
+    }
+   }
+  },
+  "lee@1400": {
+   "speed_ratio": 1.7457355537273935,
+   "operators": {
+    "untransposed": {
+     "band_error": 0.4396743103371019,
+     "envelope_corr": 0.08738405402794598,
+     "ringdown_error": 0.36374547564845305,
+     "kurtosis_error": 0.3845981237522167,
+     "feature_mmd": 0.1277414015271583
+    },
+    "beta=0 n_fft=16 (RPST)": {
+     "band_error": 0.6394354830167188,
+     "envelope_corr": 0.36335949610039403,
+     "ringdown_error": 0.20641127655717817,
+     "kurtosis_error": 0.38194076742770733,
+     "feature_mmd": 0.15989735113280612
+    },
+    "beta=0 n_fft=32 (RPST)": {
+     "band_error": 0.5736453637728123,
+     "envelope_corr": 0.369367893226464,
+     "ringdown_error": 0.15968820071875145,
+     "kurtosis_error": 0.30429666369782593,
+     "feature_mmd": 0.13277758527886951
+    },
+    "beta=0 n_fft=64 (RPST)": {
+     "band_error": 0.4926550321471336,
+     "envelope_corr": 0.3709680391587537,
+     "ringdown_error": 0.3556782121692268,
+     "kurtosis_error": 0.2544732782014199,
+     "feature_mmd": 0.11261327673740773
+    },
+    "beta=0 n_fft=128 (RPST)": {
+     "band_error": 0.4732835662001601,
+     "envelope_corr": 0.3972286910455912,
+     "ringdown_error": 0.6822267471817776,
+     "kurtosis_error": 0.4633289918478285,
+     "feature_mmd": 0.09693476633494191
+    },
+    "beta=0 n_fft=256 (RPST)": {
+     "band_error": 0.4688926754369721,
+     "envelope_corr": 0.35541575033607997,
+     "ringdown_error": 1.025964230050882,
+     "kurtosis_error": 0.681601476389379,
+     "feature_mmd": 0.10601900168620415
+    },
+    "beta=0 n_fft=512 (RPST)": {
+     "band_error": 0.4449391412035276,
+     "envelope_corr": 0.31756264182072874,
+     "ringdown_error": 1.0229696542440259,
+     "kurtosis_error": 0.7888993089700418,
+     "feature_mmd": 0.16446269674845726
+    },
+    "beta=1 (resampling)": {
+     "band_error": 1.5111549687948513,
+     "envelope_corr": 0.3654495642632693,
+     "ringdown_error": 0.36722406095741533,
+     "kurtosis_error": 0.25035083795719915,
+     "feature_mmd": 0.2515896809744369
+    }
+   }
+  }
+ }
+}
