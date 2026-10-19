@@ -20,6 +20,12 @@ def test_the_vocoder_respaces_impacts_only_with_frames_shorter_than_the_period()
     assert abs(long_[0] - 1) > 0.1 or abs(long_[1] - 1) > 0.1
 
 
+def test_envelope_line_sits_at_the_target_rate_inside_the_regime_and_at_the_source_rate_beyond():
+    inside = fv.envelope_line(synthesis.transpose(fv.impact_train(800, seed=0), 600.0, 1200.0, 0.0, 128), 400)
+    beyond = fv.envelope_line(synthesis.transpose(fv.impact_train(100, seed=0), 600.0, 1200.0, 0.0, 512), 50)
+    assert abs(inside[0] - 1.0) < 0.05 and abs(beyond[0] - 0.5) < 0.1 and inside[1] > beyond[1]
+
+
 def test_boundary_is_the_largest_ratio_up_to_which_every_cell_recovers():
     cells = [{"frame_ratio": r, "ok": ok} for r, ok in ((0.1, True), (0.1, True), (0.5, True), (0.5, False),
                                                          (1.0, True))]

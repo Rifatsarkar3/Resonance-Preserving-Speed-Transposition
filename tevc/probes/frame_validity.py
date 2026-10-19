@@ -6,7 +6,9 @@ DIRG's synthesis ceiling (shaft 100-500 Hz: inner-race impacts ~30 samples apart
   synthetic  ringing impacts (resonance fs/8, decay time constant period/8, 2 % noise floor: without one the vocoder
              cancels alternate impacts) every P samples, transposed by speed ratios 0.6, 1.5, 2.0 with β = 0 at
              n_fft 64-512 for P = 50-1600 samples (3 seeds): impacts found and their median spacing against the
-             expected ones; boundary = the largest frame / P up to which every cell is within 10 %. Then the table:
+             expected ones; boundary = the largest frame / P up to which every cell is within 10 %. Descriptive,
+             added after the first run showed the peak counts blur the failure mode: the dominant envelope line in
+             units of the target impact rate (1 = re-spaced; 1 / speed ratio = source rate kept). Then the table:
              per dataset, fault periods from the bearing geometry at the library speed, and frame / shortest period
              for the operator frames the methods use (recipe n_fft set and the TV frame, scaled by frame_scale).
   dirg       DIRG real-data frame sweep: the library transposed with β = 0 at n_fft 16-256 against the real U windows
@@ -65,6 +67,17 @@ def recovery(y, period, edge=2000):
     return len(peaks) / (len(e) / period), spacing
 
 
+def envelope_line(y, period, edge=2000):
+    """(dominant envelope frequency / expected impact rate, its prominence over the band median) within 0.3-3 times
+    the expected rate: 1 = impacts re-spaced to the target rate; 1 / speed ratio = the source rate kept."""
+    e = np.abs(hilbert(y))[edge:-edge]
+    spec = np.abs(np.fft.rfft((e - e.mean()) * np.hanning(len(e))))
+    f = np.fft.rfftfreq(len(e)) * period
+    band = np.flatnonzero((f > 0.3) & (f < 3.0))
+    k = band[np.argmax(spec[band])]
+    return float(f[k]), float(spec[k] / np.median(spec[band]))
+
+
 def boundary(cells):
     """Largest frame / period ratio up to which every cell (all speed ratios) recovers; 0 if the smallest fails."""
     upto = 0.0
@@ -80,14 +93,17 @@ def synthetic(seeds=3):
     for r in SPEED_RATIOS:
         for period in PERIODS:
             for n_fft in N_FFTS:
-                found, spacing = np.mean([recovery(synthesis.transpose(impact_train(period, s), 600.0, 600.0 * r,
-                                                                       0.0, n_fft), period / r)
-                                          for s in range(seeds)], axis=0)
+                outs = [synthesis.transpose(impact_train(period, s), 600.0, 600.0 * r, 0.0, n_fft)
+                        for s in range(seeds)]
+                found, spacing = np.mean([recovery(y, period / r) for y in outs], axis=0)
+                line, prominence = np.median([envelope_line(y, period / r) for y in outs], axis=0)
                 cells.append({"speed_ratio": r, "period": period, "n_fft": n_fft, "frame_ratio": n_fft / period,
                               "found": float(found), "spacing": float(spacing),
-                              "ok": bool(abs(found - 1) <= TOLERANCE and abs(spacing - 1) <= TOLERANCE)})
+                              "ok": bool(abs(found - 1) <= TOLERANCE and abs(spacing - 1) <= TOLERANCE),
+                              "envelope_line": float(line), "line_prominence": float(prominence)})
                 print(f"r {r:3.1f} period {period:5d} n_fft {n_fft:3d} ratio {n_fft / period:6.3f}  found "
-                      f"{found:5.2f}  spacing {spacing:5.2f}", flush=True)
+                      f"{found:5.2f}  spacing {spacing:5.2f}  envelope line {line:4.2f} x{prominence:5.0f}",
+                      flush=True)
     return {"cells": cells, "boundary": boundary(cells)}
 
 
