@@ -346,6 +346,11 @@ def test_decay_is_fixed_in_samples_across_periods():
         assert 0.08 < e[period + 42] / e[period + 2] < 0.2      # e^-2 = 0.135 after 40 samples, both periods
 
 
+def test_an_impact_that_rounds_to_the_end_is_dropped():
+    x = vi.impact_train(24.9, 2.0, seed=0, n=100, noise=0.0)     # 4 x 24.9 = 99.6 rounds to index 100
+    assert x.shape == (100,)
+
+
 def test_jitter_moves_impacts_but_keeps_the_mean_period():
     x0 = vi.impact_train(400, 20.0, seed=1, n=40_000, noise=0.0)
     xj = vi.impact_train(400, 20.0, seed=1, n=40_000, jitter=0.02, noise=0.0)

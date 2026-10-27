@@ -64,8 +64,8 @@ def impact_train(period, tau, seed, n=N_SAMPLES, f_res=1 / 8, jitter=0.0, noise=
     +-jitter x period; ring-downs superpose; peak-normalised, plus white noise of standard deviation `noise`."""
     rng = np.random.default_rng(seed)
     n_imp = int(n / period) + 2
-    t = np.arange(n_imp) * period + jitter * period * rng.uniform(-1.0, 1.0, n_imp)
-    t = np.round(t[(t >= 0) & (t < n)]).astype(int)
+    t = np.round(np.arange(n_imp) * period + jitter * period * rng.uniform(-1.0, 1.0, n_imp)).astype(int)
+    t = t[(t >= 0) & (t < n)]                               # after rounding: 99.6 would round to index n
     pulses = np.zeros(n, dtype=np.complex128)
     np.add.at(pulses, t, np.exp(1j * rng.uniform(0.0, 2 * np.pi, len(t))))
     k = np.arange(int(np.ceil(8 * tau)) + 1)
