@@ -1,0 +1,306 @@
+{
+ "note": "exploratory bridge runs (reframe spec 2026-10-20 \u00a75.3-5.6, amendments A1-A6); two-sided tests",
+ "dataset": "lee",
+ "bridge_commit": "3b7f3ef477ec1d3a74b89e0159503e1546f4b67d",
+ "tests": [
+  {
+   "first": "RPST-DA",
+   "second": "RPST-DA-B1",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.0934375,
+   "ci95": [
+    0.028937500000000015,
+    0.15387500000000007
+   ],
+   "wins": 7,
+   "ties": 0,
+   "losses": 3,
+   "p": 0.03125,
+   "alternative": "two-sided",
+   "p_holm": 0.04296875
+  },
+  {
+   "first": "RPST-DA",
+   "second": "RPST-DA-NCS",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.20681249999999998,
+   "ci95": [
+    0.12843749999999995,
+    0.2946265625
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.001953125,
+   "alternative": "two-sided",
+   "p_holm": 0.013671875
+  },
+  {
+   "first": "RPST-DA",
+   "second": "RPST-DA-W0",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.15662500000000004,
+   "ci95": [
+    0.112246875,
+    0.20493750000000005
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.001953125,
+   "alternative": "two-sided",
+   "p_holm": 0.013671875
+  },
+  {
+   "first": "RPST-DA",
+   "second": "COT-T",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.29275000000000007,
+   "ci95": [
+    0.22993750000000004,
+    0.35975
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.001953125,
+   "alternative": "two-sided",
+   "p_holm": 0.013671875
+  },
+  {
+   "first": "RPST-DA",
+   "second": "COT-CDAN",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.12556250000000002,
+   "ci95": [
+    0.052495312500000064,
+    0.198503125
+   ],
+   "wins": 8,
+   "ties": 0,
+   "losses": 2,
+   "p": 0.021484375,
+   "alternative": "two-sided",
+   "p_holm": 0.04296875
+  },
+  {
+   "first": "RPST-DA",
+   "second": "ENV-ORDER",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.3017499999999999,
+   "ci95": [
+    0.2591859374999999,
+    0.34781562499999985
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.001953125,
+   "alternative": "two-sided",
+   "p_holm": 0.013671875
+  },
+  {
+   "first": "RPST-DA",
+   "second": "DSR",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.09025000000000004,
+   "ci95": [
+    0.03825000000000006,
+    0.14975000000000005
+   ],
+   "wins": 8,
+   "ties": 0,
+   "losses": 2,
+   "p": 0.0078125,
+   "alternative": "two-sided",
+   "p_holm": 0.0234375
+  }
+ ],
+ "summary": {
+  "STATIC-NONE": {
+   "runs": 10,
+   "acc_mean": 0.6058749999999999,
+   "acc_std": 0.03537544169335556,
+   "auc_mean": 0.605875,
+   "auc_std": 0.03537544169335557,
+   "evals_per_stream": 5.0
+  },
+  "DSR": {
+   "runs": 10,
+   "acc_mean": 0.804625,
+   "acc_std": 0.03240635547234523,
+   "auc_mean": 0.7842916666666666,
+   "auc_std": 0.0263822972396054,
+   "evals_per_stream": 150.0
+  },
+  "COT": {
+   "runs": 10,
+   "acc_mean": 0.5816874999999999,
+   "acc_std": 0.038191591433848364,
+   "auc_mean": 0.54834375,
+   "auc_std": 0.022028412937896806,
+   "evals_per_stream": 150.0
+  },
+  "DANN": {
+   "runs": 10,
+   "acc_mean": 0.71075,
+   "acc_std": 0.028817583607929378,
+   "auc_mean": 0.7038541666666667,
+   "auc_std": 0.01510951342146178,
+   "evals_per_stream": 150.0
+  },
+  "CDAN": {
+   "runs": 10,
+   "acc_mean": 0.7015625,
+   "acc_std": 0.0931578172041939,
+   "auc_mean": 0.6850020833333333,
+   "auc_std": 0.04858988793155823,
+   "evals_per_stream": 150.0
+  },
+  "SHOT": {
+   "runs": 10,
+   "acc_mean": 0.7140625,
+   "acc_std": 0.1158549234225719,
+   "auc_mean": 0.6968125000000001,
+   "auc_std": 0.08529878145703816,
+   "evals_per_stream": 150.0
+  },
+  "AGENT": {
+   "runs": 10,
+   "acc_mean": 0.748,
+   "acc_std": 0.03697528735520525,
+   "auc_mean": 0.7450937499999999,
+   "auc_std": 0.02799416210532414,
+   "evals_per_stream": 150.0
+  },
+  "AGENT-B1": {
+   "runs": 10,
+   "acc_mean": 0.6633125,
+   "acc_std": 0.041961710597281404,
+   "auc_mean": 0.6742166666666666,
+   "auc_std": 0.03836941598895311,
+   "evals_per_stream": 150.0
+  },
+  "RPST-DA": {
+   "runs": 10,
+   "acc_mean": 0.8948750000000001,
+   "acc_std": 0.07237262517692723,
+   "auc_mean": 0.8951125,
+   "auc_std": 0.0553454195823828,
+   "evals_per_stream": 150.0
+  },
+  "RPST-DA-NC": {
+   "runs": 10,
+   "acc_mean": 0.7378124999999999,
+   "acc_std": 0.04890859618972924,
+   "auc_mean": 0.6941104166666667,
+   "auc_std": 0.0589294960763496,
+   "evals_per_stream": 150.0
+  },
+  "RPST-DA-B1": {
+   "runs": 10,
+   "acc_mean": 0.8014374999999999,
+   "acc_std": 0.06328386568668197,
+   "auc_mean": 0.7816291666666666,
+   "auc_std": 0.04747798173890714,
+   "evals_per_stream": 150.0
+  },
+  "RPST-DA-NCS": {
+   "runs": 10,
+   "acc_mean": 0.6880625,
+   "acc_std": 0.10459723720658211,
+   "auc_mean": 0.6960145833333333,
+   "auc_std": 0.05759909942299688,
+   "evals_per_stream": 150.0
+  },
+  "RPST-DA-W0": {
+   "runs": 10,
+   "acc_mean": 0.7382500000000001,
+   "acc_std": 0.041318881882258116,
+   "auc_mean": 0.7380520833333332,
+   "auc_std": 0.03097381041175934,
+   "evals_per_stream": 150.0
+  },
+  "COT-T": {
+   "runs": 10,
+   "acc_mean": 0.6021249999999998,
+   "acc_std": 0.04234180115441476,
+   "auc_mean": 0.5654625,
+   "auc_std": 0.04062436837115819,
+   "evals_per_stream": 150.0
+  },
+  "COT-CDAN": {
+   "runs": 10,
+   "acc_mean": 0.7693125000000001,
+   "acc_std": 0.0836806849353541,
+   "auc_mean": 0.7411416666666666,
+   "auc_std": 0.05168043314581341,
+   "evals_per_stream": 150.0
+  },
+  "ENV-ORDER": {
+   "runs": 10,
+   "acc_mean": 0.593125,
+   "acc_std": 0.0006250000000000422,
+   "auc_mean": 0.5976270833333335,
+   "auc_std": 0.0018451665932767473,
+   "evals_per_stream": 150.0
+  }
+ },
+ "best_of": {
+  "STATIC-NONE": 0.6058749999999999,
+  "DSR": 0.8818125,
+  "COT": 0.59375,
+  "DANN": 0.9420624999999999,
+  "CDAN": 0.9331249999999999,
+  "SHOT": 0.905,
+  "AGENT": 0.8290625,
+  "AGENT-B1": 0.7528750000000001,
+  "RPST-DA": 1.0,
+  "RPST-DA-NC": 0.9505624999999999,
+  "RPST-DA-B1": 0.9499999999999998,
+  "RPST-DA-NCS": 0.959875,
+  "RPST-DA-W0": 0.8379375,
+  "COT-T": 0.62675,
+  "COT-CDAN": 0.9248125,
+  "ENV-ORDER": 0.6768125
+ },
+ "selection_loss": {
+  "STATIC-NONE": 0.0,
+  "DSR": 0.07718749999999996,
+  "COT": 0.012062500000000087,
+  "DANN": 0.23131249999999992,
+  "CDAN": 0.2315624999999999,
+  "SHOT": 0.19093749999999998,
+  "AGENT": 0.08106250000000004,
+  "AGENT-B1": 0.0895625000000001,
+  "RPST-DA": 0.10512499999999991,
+  "RPST-DA-NC": 0.21275,
+  "RPST-DA-B1": 0.14856249999999993,
+  "RPST-DA-NCS": 0.2718125,
+  "RPST-DA-W0": 0.09968749999999993,
+  "COT-T": 0.02462500000000023,
+  "COT-CDAN": 0.15549999999999997,
+  "ENV-ORDER": 0.08368750000000003
+ },
+ "im_only": {
+  "RPST-DA": 0.8784375000000001,
+  "RPST-DA-NC": 0.7286875,
+  "RPST-DA-B1": 0.76025,
+  "RPST-DA-NCS": 0.6991875000000001,
+  "RPST-DA-W0": 0.7377499999999999
+ }
+}
