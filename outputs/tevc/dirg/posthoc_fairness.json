@@ -1,0 +1,149 @@
+{
+ "note": "post hoc two-sided re-test of the exploratory comparisons (attack audit U8)",
+ "tests": [
+  {
+   "first": "RPST-DA",
+   "second": "CDAN",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.06506265664160402,
+   "ci95": [
+    -0.007969924812030071,
+    0.13183583959899745
+   ],
+   "wins": 8,
+   "ties": 0,
+   "losses": 2,
+   "p": 0.1171875,
+   "alternative": "two-sided",
+   "p_holm": 0.3515625
+  },
+  {
+   "first": "RPST-DA",
+   "second": "DANN",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.041503759398496244,
+   "ci95": [
+    -0.05483834586466165,
+    0.14170426065162908
+   ],
+   "wins": 5,
+   "ties": 0,
+   "losses": 5,
+   "p": 0.453125,
+   "alternative": "two-sided",
+   "p_holm": 0.453125
+  },
+  {
+   "first": "RPST-DA",
+   "second": "DEEP-CORAL",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.12025062656641602,
+   "ci95": [
+    0.05242857142857143,
+    0.18446240601503755
+   ],
+   "wins": 9,
+   "ties": 0,
+   "losses": 1,
+   "p": 0.01171875,
+   "alternative": "two-sided",
+   "p_holm": 0.0703125
+  },
+  {
+   "first": "RPST-DA",
+   "second": "SHOT",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.12892230576441102,
+   "ci95": [
+    0.06290726817042606,
+    0.19513909774436086
+   ],
+   "wins": 8,
+   "ties": 0,
+   "losses": 2,
+   "p": 0.01171875,
+   "alternative": "two-sided",
+   "p_holm": 0.0703125
+  },
+  {
+   "first": "RPST-DA",
+   "second": "AGENT",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.11333333333333331,
+   "ci95": [
+    0.03979824561403502,
+    0.18807518796992478
+   ],
+   "wins": 8,
+   "ties": 0,
+   "losses": 2,
+   "p": 0.025390625,
+   "alternative": "two-sided",
+   "p_holm": 0.1015625
+  },
+  {
+   "first": "RPST-DA",
+   "second": "DSR",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.17919799498746863,
+   "ci95": [
+    0.12420802005012531,
+    0.23162907268170424
+   ],
+   "wins": 9,
+   "ties": 0,
+   "losses": 1,
+   "p": 0.00390625,
+   "alternative": "two-sided",
+   "p_holm": 0.02734375
+  },
+  {
+   "first": "RPST-DA",
+   "second": "STATIC-NONE",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.19488721804511275,
+   "ci95": [
+    0.13934586466165408,
+    0.2527318295739348
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.001953125,
+   "alternative": "two-sided",
+   "p_holm": 0.015625
+  },
+  {
+   "first": "RPST-DA",
+   "second": "RPST-DA-NC",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.063859649122807,
+   "ci95": [
+    -0.030726817042606536,
+    0.1550375939849624
+   ],
+   "wins": 7,
+   "ties": 0,
+   "losses": 3,
+   "p": 0.22265625,
+   "alternative": "two-sided",
+   "p_holm": 0.4453125
+  }
+ ]
+}
