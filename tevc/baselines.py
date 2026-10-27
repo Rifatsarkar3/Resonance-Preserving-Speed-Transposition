@@ -7,6 +7,10 @@ caches them like recipes (asdict -> cache key) and result files rebuild them (co
 speed information as every method (library speed and environment speed). RPSTDAConfig, the candidate of the MSSP
 method (tevc.rpstda), is registered here with the other kinds so the evaluator and result files treat it alike; it is
 not a baseline and not in METHODS.
+
+EXPLORATORY_METHODS (MSSP reframe spec §5.3, attack audit U3/U6/G1; not in METHODS, whose order fixes the archived
+random streams): COT-T, order tracking with its learning rate searched; COT-CDAN, order tracking followed by CDAN on
+the same draws as CDAN; ENV-ORDER, the classical envelope fault-order diagnosis (tevc.env_order).
 """
 import hashlib
 from collections import OrderedDict
@@ -21,6 +25,9 @@ from tevc.optimizers import B, Trial
 from tevc.recipe import Recipe
 
 METHODS = ("DSR", "COT", "DANN", "DEEP-CORAL", "CDAN", "SHOT")
+EXPLORATORY_METHODS = ("COT-T", "COT-CDAN", "ENV-ORDER")
+COT_T_STREAM, ENV_ORDER_STREAM = 100, 101      # rng streams of their own, clear of METHODS' indices
+ENV_ORDER_C_RANGE = (1e-3, 1e2)
 MAX_MODELS = 64        # trained environment-independent models kept in memory (reused across a run's environments)
 
 
@@ -36,8 +43,11 @@ class DSRConfig:
 
 @dataclass(frozen=True)
 class COTConfig:
-    """Computed order tracking: train and test on the library's angular sampling."""
+    """Order normalisation by resampling at the speed ratio (computed order tracking at constant speed): train and
+    test on the library's angular sampling. lr: the CNN's learning rate, searched only by COT-T; the archived COT
+    keeps the shared 1e-3 (left out of its cache key at that value)."""
     kind: str = "COT"
+    lr: float = 1e-3
 
 
 @dataclass(frozen=True)
@@ -72,15 +82,46 @@ class RPSTDAConfig:
     n_fft: int           # phase-vocoder frame of the copies
     copies: int          # windows per class per synthesised speed
     kind: str = "RPSTDA"
+    # Fields of the exploratory arms (MSSP reframe spec §5.3-5.4); their defaults are the archived RPST-DA and are
+    # left out of the cache key (tevc.evaluator.NEW_FIELD_DEFAULTS).
+    copies_beta: float = 0.0     # resonance shift of the copies: 0 = RPST, 1 = plain resampling (RPST-DA-B1)
+    steps_like_copies: int = 0   # RPST-DA-NCS: no copies, but as many training steps as with this many copies
+    tv_n_fft: int = 0            # transposed-validation frame override (RPST-DA-FR); 0 = rpstda.TV_N_FFT
 
     def __post_init__(self):
         if self.method not in ("DANN", "CDAN"):
             raise ValueError(f"RPST-DA adapts with DANN or CDAN, not {self.method}")
         if not 0.0 <= self.q_lo <= self.q_hi <= RPSTDA_Q_MAX:
             raise ValueError(f"RPST-DA needs 0 <= q_lo <= q_hi <= {RPSTDA_Q_MAX}, got [{self.q_lo}, {self.q_hi}]")
+        if not 0.0 <= self.copies_beta <= 1.0:
+            raise ValueError(f"copies_beta must lie in [0, 1], got {self.copies_beta}")
+        if self.steps_like_copies < 0 or (self.steps_like_copies and self.copies):
+            raise ValueError("steps_like_copies matches the training length of a copies twin and needs copies = 0")
+        if self.tv_n_fft < 0:
+            raise ValueError(f"tv_n_fft must be >= 0, got {self.tv_n_fft}")
 
 
-KINDS = {"DSR": DSRConfig, "COT": COTConfig, "UDA": UDAConfig, "SHOT": SHOTConfig, "RPSTDA": RPSTDAConfig}
+@dataclass(frozen=True)
+class COTUDAConfig:
+    """Order tracking followed by adaptation (spec §5.3; audit U3): library and target windows on the library's
+    angular sampling, cropped to one common length (cot_length), then DANN or CDAN with the unlabelled buffer."""
+    method: str          # DANN | CDAN
+    lr: float
+    weight: float
+    kind: str = "COTUDA"
+
+
+@dataclass(frozen=True)
+class EnvOrderConfig:
+    """Classical envelope fault-order diagnosis (spec §5.3; audit G1): the envelope fault-order features of
+    tevc.features at each window's shaft speed, standardised on the library, then a multinomial logistic regression
+    with inverse regularisation C (tevc.env_order)."""
+    C: float
+    kind: str = "ENVORDER"
+
+
+KINDS = {"DSR": DSRConfig, "COT": COTConfig, "UDA": UDAConfig, "SHOT": SHOTConfig, "RPSTDA": RPSTDAConfig,
+         "COTUDA": COTUDAConfig, "ENVORDER": EnvOrderConfig}
 # Hu et al. 2019, Sec. IV-B: (var_r, var_l, var_e) = (0.02, 0.1, 0.02); their Table 4 enlarges the set 2x, 5x, 10x
 DSR_PUBLISHED = DSRConfig(0.02, 0.1, 0.02, 4)
 DSR_COPIES = (1, 4, 9)
@@ -102,7 +143,18 @@ def _log_uniform(rng, lo, hi):
 
 
 def sample_configs(method, run_seed, budget=B):
-    """The run's `budget` candidate configurations: the published setting first, then draws around it."""
+    """The run's `budget` candidate configurations: the published setting first, then draws around it. The
+    exploratory methods draw from streams of their own, except COT-CDAN, which takes CDAN's draws so that the two
+    are paired draw by draw."""
+    if method == "COT-T":
+        rng = np.random.default_rng([run_seed, COT_T_STREAM])
+        return [COTConfig()] + [COTConfig(lr=round(_log_uniform(rng, *LR_RANGE), 6)) for _ in range(budget - 1)]
+    if method == "COT-CDAN":
+        return [COTUDAConfig(c.method, c.lr, c.weight) for c in sample_configs("CDAN", run_seed, budget)]
+    if method == "ENV-ORDER":
+        rng = np.random.default_rng([run_seed, ENV_ORDER_STREAM])
+        return [EnvOrderConfig(1.0)] + [EnvOrderConfig(round(_log_uniform(rng, *ENV_ORDER_C_RANGE), 6))
+                                        for _ in range(budget - 1)]
     rng = np.random.default_rng([run_seed, METHODS.index(method)])
     if method == "COT":
         return [COTConfig()] * budget
@@ -182,9 +234,28 @@ def _identity(W):
     return W
 
 
+def cot_length(stream, env):
+    """Common window length of COT-CDAN: a target window resampled from the environment speed to the library speed
+    has about win x s_env / s_lib samples; library and target windows are both cropped to the shorter of that and
+    win, so that both cover the same number of shaft revolutions and share one forward pass."""
+    win = stream.dataset.win
+    return min(win, len(synthesis.resample(np.zeros(win, np.float32), env.rpm, stream.library_rpm)))
+
+
+def crop(W, n):
+    """Centre crop of every window (rows of W) to n samples."""
+    W = np.asarray(W)
+    start = (W.shape[1] - n) // 2
+    return W[:, start:start + n]
+
+
 def view(config, stream, env):
     """Window transform before prediction: COT stretches target windows by env speed / library speed onto the
-    library's angular sampling (every frequency moves, resonances included); other methods see windows unchanged."""
+    library's angular sampling (every frequency moves, resonances included); COT-CDAN does the same and crops to
+    cot_length; other methods see windows unchanged."""
+    if isinstance(config, COTUDAConfig):
+        n = cot_length(stream, env)
+        return lambda W: crop(np.stack([synthesis.resample(w, env.rpm, stream.library_rpm) for w in W]), n)
     if not isinstance(config, COTConfig):
         return _identity
     return lambda W: np.stack([synthesis.resample(w, env.rpm, stream.library_rpm) for w in W])
@@ -192,11 +263,11 @@ def view(config, stream, env):
 
 def validation(config, stream, env):
     """Labelled windows a candidate is validated on without any target label: RPST-DA's transposed validation set
-    (tevc.rpstda.tv_set); None for every other kind."""
+    (tevc.rpstda.tv_set, with the frame-rule arm's own frame when tv_n_fft is set); None for every other kind."""
     if not isinstance(config, RPSTDAConfig):
         return None
     from tevc import rpstda                      # rpstda imports this module
-    return rpstda.tv_set(stream, env)
+    return rpstda.tv_set(stream, env, n_fft=config.tv_n_fft or None)
 
 
 _MODELS = OrderedDict()
@@ -226,7 +297,17 @@ def train(config, stream, env, seed, model_name, epochs):
                      lambda: train_cnn(*dsr_training_set(config, lib["W"], lib["y"], seed), model_name, epochs,
                                        seed)), lib["W"]
     if isinstance(config, COTConfig):
-        return _memo(("COT",) + key, lambda: train_cnn(*cot_library(stream), model_name, epochs, seed)), lib["W"]
+        return _memo(("COT", config.lr) + key,
+                     lambda: train_cnn(*cot_library(stream), model_name, epochs, seed, lr=config.lr)), lib["W"]
+    if isinstance(config, COTUDAConfig):
+        n = cot_length(stream, env)
+        Ws, ys = cot_library(stream)
+        Ut = view(config, stream, env)(env.U["W"])
+        return uda.train_uda(crop(Ws, n), ys, Ut, config.method, config.weight, config.lr, model_name, epochs,
+                             seed), lib["W"]
+    if isinstance(config, EnvOrderConfig):
+        from tevc import env_order
+        return env_order.train(config, stream, env), lib["W"]
     if isinstance(config, UDAConfig):
         return uda.train_uda(lib["W"], lib["y"], env.U["W"], config.method, config.weight, config.lr, model_name,
                              epochs, seed), lib["W"]

@@ -6,6 +6,13 @@ speed, keeps the library labels and scores every candidate without any target la
 B = 30 candidates per environment change, drawn once per run (rng stream [run_seed, 7], after the six baselines'
 streams 0-5); candidate 0 = CDAN at its published setting with the earlier RPST recipe. Deployment: argmax of the mean
 of rank(TV accuracy) and rank(IM) (rank_deploy). The comparators keep the full library.
+
+Exploratory arms (MSSP reframe spec docs/superpowers/specs/2026-10-20-mssp-sp-first-reframe-design.md §5.3-5.4;
+attack audit U2, G2, G6): ARMS maps an arm name to a transform of RPST-DA's own draws, so every arm is paired with
+RPST-DA candidate by candidate. RPST-DA-B1 / -B05: copies with resonance shift beta = 1 (plain resampling) / 0.5;
+RPST-DA-NCS: no copies but as many training steps as the copies twin; RPST-DA-W0: copies without adversarial
+alignment (weight 0; target batches still share the batch statistics); frame_rule_arm: copies and transposed
+validation at the frame of the rule N <= rho* P (RPST-DA-FR, DIRG).
 """
 from dataclasses import replace
 
@@ -60,34 +67,46 @@ def _balanced(y):
 
 
 def source_set(config, stream, env):
-    """Labelled source windows (W, y): the train-part library windows plus, unless copies = 0, RPST copies (beta = 0)
-    of the train-part records at the config's intermediate speeds between the library and env. The copies are thinned
-    to equal counts per class (a longer healthy record would otherwise give it more copies, as on JNU)."""
+    """Labelled source windows (W, y): the train-part library windows plus, unless copies = 0, transposed copies
+    (resonance shift config.copies_beta: 0 = RPST, 1 = plain resampling) of the train-part records at the config's
+    intermediate speeds between the library and env. The copies are thinned to equal counts per class (a longer
+    healthy record would otherwise give it more copies, as on JNU)."""
     lib = train_windows(stream)
     if config.copies == 0:
         return lib["W"], lib["y"]
     train_entries, _ = split_entries(stream.library_entries)
-    recipe = Recipe(config.n_targets, config.q_lo, config.q_hi, config.n_fft, 0.0, config.copies, True)
+    recipe = Recipe(config.n_targets, config.q_lo, config.q_hi, config.n_fft, config.copies_beta, config.copies, True)
     W, y = training_set(recipe, stream.dataset, train_entries, lib, stream.library_rpm, env.rpm, stream.src_rpm_of)
     n_lib = len(lib["y"])                                   # training_set puts the real windows first
     keep = np.r_[np.arange(n_lib), n_lib + _balanced(y[n_lib:])]
     return W[keep], y[keep]
 
 
+def twin_steps(config, n_train, n_classes, epochs, batch_size=uda.BATCH_SIZE):
+    """Training steps of the copies twin of a steps-matched candidate (RPST-DA-NCS): the twin's source is the
+    n_train real windows plus n_targets x steps_like_copies copies per class (exact when every class yields that many
+    copy windows per synthesised speed, as on PU and Lee)."""
+    n_twin = n_train + config.n_targets * config.steps_like_copies * n_classes
+    return epochs * int(np.ceil(n_twin / batch_size))
+
+
 def train(config, stream, env, seed, model_name, epochs):
     """(trained model, source windows) for one candidate; baselines.train dispatches RPST-DA candidates here."""
     W, y = source_set(config, stream, env)
-    return uda.train_uda(W, y, env.U["W"], config.method, config.weight, config.lr, model_name, epochs, seed), W
+    total = (twin_steps(config, len(y), stream.dataset.n_classes, epochs) if config.steps_like_copies else None)
+    return uda.train_uda(W, y, env.U["W"], config.method, config.weight, config.lr, model_name, epochs, seed,
+                         total_steps=total), W
 
 
-def tv_set(stream, env, cap=None):
+def tv_set(stream, env, cap=None, n_fft=None):
     """Transposed validation windows (spec §2.3): the validation part of every library record, RPST-transposed
-    (beta = 0, n_fft 256 scaled by the dataset's frame_scale) from its source speed to env's speed, windowed with hop
-    win / 4, at most `cap` (default cap_fit) per class. Labels are the library's; no target label is read."""
+    (beta = 0, n_fft 256, or the frame-rule arm's n_fft, scaled by the dataset's frame_scale) from its source speed to
+    env's speed, windowed with hop win / 4, at most `cap` (default cap_fit) per class. Labels are the library's; no
+    target label is read."""
     ds = stream.dataset
     _, val = split_entries(stream.library_entries)
 
-    n_fft = frame(TV_N_FFT, ds)
+    n_fft = frame(n_fft or TV_N_FFT, ds)
 
     def to_env(label, rec, seg):
         s0 = stream.src_rpm_of(rec) if stream.src_rpm_of else stream.library_rpm
@@ -100,9 +119,10 @@ def tv_set(stream, env, cap=None):
     return V
 
 
-def sample_configs(run_seed, budget=B, copies=True):
+def sample_configs(run_seed, budget=B, copies=True, transform=None):
     """The run's `budget` candidates: PUBLISHED first, then draws (spec §2.4) from the run's own rng stream; with
-    copies=False the same draws with copies = 0, the no-copies arm (spec §4)."""
+    copies=False the same draws with copies = 0, the no-copies arm (spec §4); with transform (an ARMS value or
+    frame_rule_arm) every draw mapped by it, an exploratory arm paired with RPST-DA candidate by candidate."""
     rng = np.random.default_rng([run_seed, RNG_STREAM])
     out = [PUBLISHED]
     for _ in range(budget - 1):
@@ -114,13 +134,50 @@ def sample_configs(run_seed, budget=B, copies=True):
         q_hi = float(rng.uniform(q_lo, RPSTDA_Q_MAX))
         n_fft, n_copies = int(rng.choice(N_FFTS)), int(rng.choice(COPIES))
         out.append(RPSTDAConfig(method, lr, weight, n_targets, round(q_lo, 3), round(q_hi, 3), n_fft, n_copies))
+    if transform is not None:
+        return [transform(c) for c in out]
     return out if copies else [replace(c, copies=0) for c in out]
 
 
-def search(evaluator, env, run_seed, budget=B, copies=True):
+ARMS = {
+    "RPST-DA": lambda c: c,
+    "RPST-DA-NC": lambda c: replace(c, copies=0),
+    "RPST-DA-B1": lambda c: replace(c, copies_beta=1.0),
+    "RPST-DA-B05": lambda c: replace(c, copies_beta=0.5),
+    "RPST-DA-NCS": lambda c: replace(c, copies=0, steps_like_copies=c.copies),
+    "RPST-DA-W0": lambda c: replace(c, weight=0.0),
+}
+
+
+def frame_rule_n(stream, env, rho, convention="source"):
+    """Frame of the rule N <= rho x P (Eq. 4; spec §5.4), in samples at the dataset's own rate: the largest power of
+    two not above rho x P, with P the shortest fault-impact period (BPFO, BPFI or 2 BSF) at the library speed
+    ("source"), or at the environment speed when that is faster ("target": P_lib / max(1, s_env / s_lib)), the
+    convention R6 selects."""
+    from tevc.features import compute_fault_frequencies
+    if convention not in ("source", "target"):
+        raise ValueError(f"unknown period convention {convention}")
+    ds = stream.dataset
+    f = compute_fault_frequencies(f_shaft_hz=stream.library_rpm / 60.0, **ds.geometry)
+    p = min(ds.fs / f["BPFO"], ds.fs / f["BPFI"], ds.fs / (2.0 * f["BSF"]))
+    if convention == "target":
+        p /= max(1.0, env.rpm / stream.library_rpm)
+    if rho * p < 2:
+        raise ValueError(f"the rule leaves no frame of at least 2 samples (rho x P = {rho * p:.2f})")
+    return int(2 ** int(np.floor(np.log2(rho * p))))
+
+
+def frame_rule_arm(n_samples, ds):
+    """Transform for RPST-DA-FR: copies and transposed validation at the frame-rule frame n_samples (actual samples;
+    stored in development counts, so that recipe.frame() maps it back on datasets with a frame_scale)."""
+    dev = int(round(n_samples / getattr(ds, "frame_scale", 1.0)))
+    return lambda c: replace(c, n_fft=dev, tv_n_fft=dev)
+
+
+def search(evaluator, env, run_seed, budget=B, copies=True, transform=None):
     """The run's candidates in order, candidate k trained with seed run_seed * 100 + k; fitness = IM on U."""
     return [Trial(c, run_seed * 100 + k, evaluator.evaluate(env, c, run_seed * 100 + k).fitness)
-            for k, c in enumerate(sample_configs(run_seed, budget, copies))]
+            for k, c in enumerate(sample_configs(run_seed, budget, copies, transform))]
 
 
 def rank_deploy(tv):

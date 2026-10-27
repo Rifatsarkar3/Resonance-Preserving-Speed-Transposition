@@ -115,3 +115,16 @@ def extract(W, fs, f_shaft, geometry, znorm=False):
     freqs = compute_fault_frequencies(f_shaft_hz=f_shaft, **geometry)
     X = np.column_stack([_time_block(W), _fft_block(W), _wpt_block(W), _envelope_block(W, fs, freqs)])
     return np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32)
+
+
+def envelope_orders(W, fs, f_shaft, geometry, znorm=True):
+    """The envelope fault-order block alone, (N, 108) float32: in the full band and 8 fixed bands, the envelope
+    spectrum peak at harmonics 1-3 of the shaft, BPFO, BPFI and BSF over the median floor. The bands stay fixed in
+    frequency (where the resonances are) and the order targets follow the shaft speed f_shaft (Hz), so these are
+    the classical speed-normalised diagnosis features (ENV-ORDER baseline; MSSP reframe spec §5.3, audit G1)."""
+    W = np.asarray(W, dtype=np.float64)
+    if znorm:
+        W = (W - W.mean(axis=1, keepdims=True)) / (W.std(axis=1, keepdims=True) + EPS)
+    freqs = compute_fault_frequencies(f_shaft_hz=f_shaft, **geometry)
+    X = _envelope_block(W, fs, freqs)
+    return np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32)

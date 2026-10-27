@@ -126,15 +126,16 @@ def test_validation_hook_is_defined_for_rpstda_only():
 def test_baselines_train_adapts_the_source_set_to_the_unlabelled_buffer(monkeypatch):
     seen = {}
 
-    def fake_uda(Ws, ys, Wt, method, weight, lr, model_name, epochs, seed):
-        seen.update(Ws=Ws, Wt=Wt, args=(method, weight, lr, model_name, epochs, seed))
+    def fake_uda(Ws, ys, Wt, method, weight, lr, model_name, epochs, seed, total_steps):
+        seen.update(Ws=Ws, Wt=Wt, args=(method, weight, lr, model_name, epochs, seed, total_steps))
         return "model"
 
     monkeypatch.setattr(rd.uda, "train_uda", fake_uda)
     U = {"W": np.ones((5, _DS.win), np.float32)}                       # no "y": target labels unreadable
     stream, env = _stream([_noise(0), _noise(1)], U=U)
     model, W = bl.train(RPSTDAConfig("CDAN", 2e-3, 0.5, 1, 0.5, 0.5, 128, 0), stream, env, 7, "TICNN", 3)
-    assert model == "model" and seen["Wt"] is U["W"] and seen["args"] == ("CDAN", 0.5, 2e-3, "TICNN", 3, 7)
+    # total_steps None: every archived arm keeps its old epoch loop; only RPST-DA-NCS sets it
+    assert model == "model" and seen["Wt"] is U["W"] and seen["args"] == ("CDAN", 0.5, 2e-3, "TICNN", 3, 7, None)
     assert np.array_equal(W, seen["Ws"]) and len(W) == 2 * 39
 
 

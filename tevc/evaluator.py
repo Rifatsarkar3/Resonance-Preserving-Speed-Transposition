@@ -58,6 +58,23 @@ def _fingerprint(*window_sets):
     return h.hexdigest()[:12]
 
 
+# Fields added to a candidate kind after results were archived, with the default that reproduces the archived
+# behaviour. A field at its default is left out of the cache key, so every archived entry keeps its key; a changed
+# field (a new arm or baseline) gets a new key. Keyed by kind ("recipe" for Recipe, which has no kind field).
+NEW_FIELD_DEFAULTS = {"recipe": {"tsm": "pv"},
+                      "RPSTDA": {"copies_beta": 0.0, "steps_like_copies": 0, "tv_n_fft": 0},
+                      "COT": {"lr": 1e-3}}
+
+
+def legacy_view(config):
+    """asdict(config) without the post-archive fields that sit at their defaults (the cache-key payload)."""
+    r = asdict(config)
+    for name, default in NEW_FIELD_DEFAULTS.get(r.get("kind", "recipe"), {}).items():
+        if name in r and r[name] == default:
+            del r[name]
+    return r
+
+
 class RecipeEvaluator:
     def __init__(self, stream, model_name="TICNN", epochs=40, cache_dir=Path("outputs/tevc/cache/evals"),
                  train_fn=train_cnn, predict_fn=predict, weights_fn=None, baseline_fn=None, view_fn=None,
@@ -81,19 +98,24 @@ class RecipeEvaluator:
 
     def validation(self, env, config):
         """Labelled windows `config` is validated on without target labels (RPST-DA's transposed validation set),
-        or None; built once per environment and candidate kind."""
-        key = (getattr(config, "kind", "recipe"), env.name)
+        or None; built once per environment, candidate kind and transposed-validation frame (the frame-rule arm
+        overrides it)."""
+        key = (getattr(config, "kind", "recipe"), env.name, getattr(config, "tv_n_fft", 0))
         if key not in self._validation:
             self._validation[key] = self.validation_fn(config, self.stream, env)
         return self._validation[key]
 
     def _key(self, env, recipe, seed):
-        r = asdict(recipe)
-        if r.get("tsm") == "pv":
-            del r["tsm"]                # phase-vocoder recipes keep the keys they had before the tsm field
+        r = legacy_view(recipe)         # archived candidates keep the keys they had before any later field
         payload = json.dumps([self.stream.dataset.name, env.name, _fingerprint(self.stream.library, env.U, env.T),
                               r, seed, self.model_name, self.epochs], sort_keys=True)
         return hashlib.sha1(payload.encode()).hexdigest()[:16]
+
+    def _predict(self, model, W):
+        """Class probabilities of W: a model with its own predictor (the classical ENV-ORDER baseline, which is
+        not a network) uses it; every network goes through predict_fn as before."""
+        own = getattr(model, "predict_windows", None)
+        return own(W) if own is not None else self.predict_fn(model, W)
 
     def probabilities(self, env, recipe, seed):
         """(probabilities on U, probabilities on T, cost in seconds, cached?) for one trained model."""
@@ -105,9 +127,9 @@ class RecipeEvaluator:
         t0 = time.time()
         model, _ = self._train(env, recipe, seed)
         view = self.view_fn(recipe, self.stream, env)
-        arrays = {"pU": self.predict_fn(model, view(env.U["W"])), "pT": self.predict_fn(model, view(env.T["W"]))}
+        arrays = {"pU": self._predict(model, view(env.U["W"])), "pT": self._predict(model, view(env.T["W"]))}
         if V is not None:
-            arrays["pV"] = self.predict_fn(model, view(V["W"]))
+            arrays["pV"] = self._predict(model, view(V["W"]))
         cost = time.time() - t0
         _publish(path, lambda p: np.savez(p, cost_s=cost, **arrays))
         return arrays["pU"], arrays["pT"], cost, False

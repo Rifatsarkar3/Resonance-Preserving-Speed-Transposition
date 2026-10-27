@@ -23,6 +23,7 @@ from tevc.models import MODELS, TICNN
 
 FEAT_DIM = 256
 UDA_METHODS = ("DANN", "DEEP-CORAL", "CDAN")
+BATCH_SIZE = 32
 
 
 def features_and_logits(model, x):
@@ -104,11 +105,17 @@ def centroid_labels(f, p, rounds=1):
     return labels
 
 
-def train_uda(Ws, ys, Wt, method, weight, lr, model_name="TICNN", epochs=40, seed=42, batch_size=32):
+def train_uda(Ws, ys, Wt, method, weight, lr, model_name="TICNN", epochs=40, seed=42, batch_size=BATCH_SIZE,
+              total_steps=None):
     """DANN | DEEP-CORAL | CDAN on labelled source windows (Ws, ys) and unlabelled target windows Wt. Each step: one
     source batch and an equal-size random target batch in one forward pass (shared batch statistics, as in the CDAN
     reference code). DANN / CDAN: discriminator behind a gradient reversal layer with coefficient
-    weight x grl_coefficient(progress); DEEP-CORAL: weight x coral(features)."""
+    weight x grl_coefficient(progress); DEEP-CORAL: weight x coral(features).
+
+    total_steps: train for exactly this many steps instead of `epochs` passes over the source (the steps-matched
+    no-copies arm of the MSSP reframe spec, §5.3); passes over the source continue, or stop inside one, until it is
+    reached. The default (None) takes epochs x ceil(n / batch_size) steps with the same random draws in the same
+    order as before the option existed."""
     if method not in UDA_METHODS:
         raise ValueError(f"unknown domain-adaptation method {method}")
     set_all_seeds(seed)
@@ -121,12 +128,17 @@ def train_uda(Ws, ys, Wt, method, weight, lr, model_name="TICNN", epochs=40, see
     Xs, Xt = torch.tensor(znorm(Ws), device=DEVICE), torch.tensor(znorm(Wt), device=DEVICE)
     Ys = torch.tensor(ys, dtype=torch.long, device=DEVICE)
     g = torch.Generator(device="cpu").manual_seed(seed)
-    total, step = epochs * int(np.ceil(len(Xs) / batch_size)), 0
+    if total_steps and len(Xs) == 0:
+        raise ValueError("total_steps needs at least one source window")
+    total = int(total_steps) if total_steps else epochs * int(np.ceil(len(Xs) / batch_size))
+    step = 0
     model.train()
     if disc is not None:
         disc.train()
-    for _ in range(epochs):
+    while step < total:
         for idx in torch.randperm(len(Xs), generator=g).split(batch_size):
+            if step == total:
+                break
             tidx = torch.randint(len(Xt), (len(idx),), generator=g).to(DEVICE)
             idx, n = idx.to(DEVICE), len(idx)
             f, logits = features_and_logits(model, torch.cat([Xs[idx], Xt[tidx]]))

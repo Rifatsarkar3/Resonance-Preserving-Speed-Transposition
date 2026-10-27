@@ -162,11 +162,15 @@ def summarize(results):
     return out
 
 
-def run_level_tests(results, key, ref="AGENT", n_boot=10_000):
+def run_level_tests(results, key, ref="AGENT", n_boot=10_000, alternative="greater"):
     """Dependence-aware comparison of ref against every other method. Environments within one stream run share
     the agent's memory and the same data, so the unit is the independent run: per run, the stream-mean difference
-    ref - other; exact one-sided sign-flip permutation test over runs (smallest p = 2^-runs); Holm across the
-    other methods; percentile bootstrap 95% CI of the mean difference over runs."""
+    ref - other; exact sign-flip permutation test over runs, one-sided (alternative "greater", the archived default:
+    smallest p = 2^-runs) or two-sided ("two-sided": |null| >= |observed|, smallest p = 2^(1-runs); every new
+    exploratory test, MSSP reframe spec §5); Holm across the other methods; percentile bootstrap 95% CI of the mean
+    difference over runs."""
+    if alternative not in ("greater", "two-sided"):
+        raise ValueError(f"alternative must be 'greater' or 'two-sided', not {alternative!r}")
     if ref not in results:
         return {}
     tests, rng = {}, np.random.default_rng(0)
@@ -178,10 +182,12 @@ def run_level_tests(results, key, ref="AGENT", n_boot=10_000):
                          for r in common])
         null = (np.array(list(itertools.product((1.0, -1.0), repeat=len(diff)))) * np.abs(diff)).mean(axis=1)
         boot = diff[rng.integers(len(diff), size=(n_boot, len(diff)))].mean(axis=1)
+        p = (float(np.mean(null >= diff.mean() - 1e-12)) if alternative == "greater"
+             else float(np.mean(np.abs(null) >= abs(diff.mean()) - 1e-12)))
         tests[m] = {"runs": len(diff), "mean_diff": float(diff.mean()),
                     "ci95": [float(np.percentile(boot, 2.5)), float(np.percentile(boot, 97.5))],
                     "wins": int((diff > 0).sum()), "ties": int((diff == 0).sum()), "losses": int((diff < 0).sum()),
-                    "p": float(np.mean(null >= diff.mean() - 1e-12)), "p_holm": None}
+                    "p": p, "alternative": alternative, "p_holm": None}
     ranked = sorted((v["p"], m) for m, v in tests.items())
     running = 0.0
     for i, (p, m) in enumerate(ranked):

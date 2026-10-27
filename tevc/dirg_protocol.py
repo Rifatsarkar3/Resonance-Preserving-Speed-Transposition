@@ -68,15 +68,16 @@ SECONDARY = {"S1": [("AGENT", m, k) for m in ("DANN", "DEEP-CORAL", "CDAN", "SHO
 LOCATION = np.array([0, 1, 1, 1, 2, 2, 2])        # 0A healthy; 1A-3A inner ring; 4A-6A roller
 
 
-def family(results, tests):
-    """One-sided run-level comparisons of first against second, Holm over this family; lower-is-better metrics are
-    negated first, so a positive mean difference always favours first."""
+def family(results, tests, alternative="greater"):
+    """Run-level comparisons of first against second, Holm over this family; one-sided by default (the archived
+    protocols), two-sided with alternative="two-sided" (every new exploratory test, MSSP reframe spec §5);
+    lower-is-better metrics are negated first, so a positive mean difference always favours first."""
     rows = []
     for a, b, k in tests:
         sign = -1.0 if k in LOWER_IS_BETTER else 1.0
         flipped = {m: {r: [{k: sign * e[k]} for e in envs] for r, envs in results[m].items()} for m in (a, b)}
         rows.append({"first": a, "second": b, "metric": k, "better": "lower" if sign < 0 else "higher",
-                     **run_level_tests(flipped, k, ref=a)[b]})
+                     **run_level_tests(flipped, k, ref=a, alternative=alternative)[b]})
     for row, p in zip(rows, holm([row["p"] for row in rows])):
         row["p_holm"] = p
     return rows
