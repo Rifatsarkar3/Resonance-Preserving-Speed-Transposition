@@ -1,0 +1,275 @@
+{
+ "note": "exploratory bridge runs (reframe spec 2026-10-20 \u00a75.3-5.6, amendments A1-A6); two-sided tests",
+ "dataset": "pu",
+ "bridge_commit": "d3f1cf91093c8eab5d8a68f84f31fb286c15b8b1",
+ "tests": [
+  {
+   "first": "RPST-DA",
+   "second": "RPST-DA-B1",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.08802083333333335,
+   "ci95": [
+    0.04624739583333334,
+    0.12645833333333328
+   ],
+   "wins": 8,
+   "ties": 0,
+   "losses": 2,
+   "p": 0.0078125,
+   "alternative": "two-sided",
+   "p_holm": 0.0234375
+  },
+  {
+   "first": "RPST-DA",
+   "second": "RPST-DA-NCS",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.050937500000000004,
+   "ci95": [
+    0.01301822916666663,
+    0.08427083333333338
+   ],
+   "wins": 7,
+   "ties": 0,
+   "losses": 3,
+   "p": 0.033203125,
+   "alternative": "two-sided",
+   "p_holm": 0.033203125
+  },
+  {
+   "first": "RPST-DA",
+   "second": "RPST-DA-W0",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.03468749999999998,
+   "ci95": [
+    0.01218749999999994,
+    0.05875000000000001
+   ],
+   "wins": 9,
+   "ties": 0,
+   "losses": 1,
+   "p": 0.015625,
+   "alternative": "two-sided",
+   "p_holm": 0.03125
+  },
+  {
+   "first": "RPST-DA",
+   "second": "COT-T",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.25854166666666667,
+   "ci95": [
+    0.23520572916666663,
+    0.2842734375
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.001953125,
+   "alternative": "two-sided",
+   "p_holm": 0.013671875
+  },
+  {
+   "first": "RPST-DA",
+   "second": "COT-CDAN",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.2311458333333333,
+   "ci95": [
+    0.19031250000000002,
+    0.27656249999999993
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.001953125,
+   "alternative": "two-sided",
+   "p_holm": 0.013671875
+  },
+  {
+   "first": "RPST-DA",
+   "second": "ENV-ORDER",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.35541666666666666,
+   "ci95": [
+    0.3416666666666667,
+    0.3681249999999999
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.001953125,
+   "alternative": "two-sided",
+   "p_holm": 0.013671875
+  },
+  {
+   "first": "RPST-DA",
+   "second": "DSR",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.10708333333333334,
+   "ci95": [
+    0.08614583333333335,
+    0.12572916666666664
+   ],
+   "wins": 10,
+   "ties": 0,
+   "losses": 0,
+   "p": 0.001953125,
+   "alternative": "two-sided",
+   "p_holm": 0.013671875
+  }
+ ],
+ "summary": {
+  "RPST-DA": {
+   "runs": 10,
+   "acc_mean": 0.8376041666666666,
+   "acc_std": 0.02343842590763676,
+   "auc_mean": 0.8156006944444444,
+   "auc_std": 0.02076143873736155,
+   "evals_per_stream": 90.0
+  },
+  "DSR": {
+   "runs": 10,
+   "acc_mean": 0.7305208333333333,
+   "acc_std": 0.0191284151816378,
+   "auc_mean": 0.7177152777777778,
+   "auc_std": 0.024252306750411352,
+   "evals_per_stream": 90.0
+  },
+  "COT": {
+   "runs": 10,
+   "acc_mean": 0.5917708333333332,
+   "acc_std": 0.05059208892510328,
+   "auc_mean": 0.5676874999999999,
+   "auc_std": 0.03319891226906039,
+   "evals_per_stream": 90.0
+  },
+  "DANN": {
+   "runs": 10,
+   "acc_mean": 0.7509375,
+   "acc_std": 0.01806293252077302,
+   "auc_mean": 0.7538194444444445,
+   "auc_std": 0.010710530830869798,
+   "evals_per_stream": 90.0
+  },
+  "DEEP-CORAL": {
+   "runs": 10,
+   "acc_mean": 0.7434375,
+   "acc_std": 0.03186223191988707,
+   "auc_mean": 0.7448020833333333,
+   "auc_std": 0.02437479250663504,
+   "evals_per_stream": 90.0
+  },
+  "CDAN": {
+   "runs": 10,
+   "acc_mean": 0.791875,
+   "acc_std": 0.02623594200286655,
+   "auc_mean": 0.7803923611111112,
+   "auc_std": 0.013767657100643347,
+   "evals_per_stream": 90.0
+  },
+  "SHOT": {
+   "runs": 10,
+   "acc_mean": 0.7254166666666666,
+   "acc_std": 0.10552057625832453,
+   "auc_mean": 0.7475868055555555,
+   "auc_std": 0.07877510110013944,
+   "evals_per_stream": 90.0
+  },
+  "RPST-DA-B1": {
+   "runs": 10,
+   "acc_mean": 0.7495833333333333,
+   "acc_std": 0.06336758941989892,
+   "auc_mean": 0.7592395833333333,
+   "auc_std": 0.03670689886238504,
+   "evals_per_stream": 90.0
+  },
+  "RPST-DA-NCS": {
+   "runs": 10,
+   "acc_mean": 0.7866666666666666,
+   "acc_std": 0.040509451057747024,
+   "auc_mean": 0.7948402777777777,
+   "auc_std": 0.020728213964706862,
+   "evals_per_stream": 90.0
+  },
+  "RPST-DA-W0": {
+   "runs": 10,
+   "acc_mean": 0.8029166666666667,
+   "acc_std": 0.02698218290732694,
+   "auc_mean": 0.7846527777777779,
+   "auc_std": 0.016588088781683493,
+   "evals_per_stream": 90.0
+  },
+  "COT-T": {
+   "runs": 10,
+   "acc_mean": 0.5790624999999999,
+   "acc_std": 0.035692704913298165,
+   "auc_mean": 0.5650381944444445,
+   "auc_std": 0.0267967631395463,
+   "evals_per_stream": 90.0
+  },
+  "COT-CDAN": {
+   "runs": 10,
+   "acc_mean": 0.6064583333333333,
+   "acc_std": 0.06576506217421055,
+   "auc_mean": 0.5934479166666666,
+   "auc_std": 0.07161364022948027,
+   "evals_per_stream": 90.0
+  },
+  "ENV-ORDER": {
+   "runs": 10,
+   "acc_mean": 0.48218750000000005,
+   "acc_std": 0.003965180481390462,
+   "auc_mean": 0.4835590277777778,
+   "auc_std": 0.002958457629757129,
+   "evals_per_stream": 90.0
+  }
+ },
+ "best_of": {
+  "RPST-DA": 0.8630208333333333,
+  "DSR": 0.7583333333333333,
+  "COT": 0.6326041666666666,
+  "DANN": 0.8269791666666666,
+  "DEEP-CORAL": 0.8104166666666666,
+  "CDAN": 0.8447916666666668,
+  "SHOT": 0.8785416666666667,
+  "RPST-DA-B1": 0.8523958333333332,
+  "RPST-DA-NCS": 0.8568749999999999,
+  "RPST-DA-W0": 0.8416666666666666,
+  "COT-T": 0.629375,
+  "COT-CDAN": 0.7439583333333333,
+  "ENV-ORDER": 0.5089583333333334
+ },
+ "selection_loss": {
+  "RPST-DA": 0.025416666666666754,
+  "DSR": 0.027812500000000018,
+  "COT": 0.04083333333333339,
+  "DANN": 0.07604166666666656,
+  "DEEP-CORAL": 0.06697916666666659,
+  "CDAN": 0.052916666666666834,
+  "SHOT": 0.15312500000000007,
+  "RPST-DA-B1": 0.10281249999999997,
+  "RPST-DA-NCS": 0.07020833333333332,
+  "RPST-DA-W0": 0.03874999999999984,
+  "COT-T": 0.05031250000000009,
+  "COT-CDAN": 0.13749999999999996,
+  "ENV-ORDER": 0.026770833333333355
+ },
+ "im_only": {
+  "RPST-DA": 0.8054166666666666,
+  "RPST-DA-B1": 0.7719791666666667,
+  "RPST-DA-NCS": 0.8179166666666667,
+  "RPST-DA-W0": 0.7779166666666667
+ }
+}
