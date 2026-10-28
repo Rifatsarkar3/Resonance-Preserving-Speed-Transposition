@@ -1,0 +1,69 @@
+{
+ "note": "exploratory (audit G7): estimated target speed off by the stated fraction; two-sided tests",
+ "dataset": "lee",
+ "commit": "8ff361fd403bd9ba8eb87cd381b8f9bcc78514c1",
+ "summary": {
+  "RPST-DA@-3%": {
+   "runs": 10,
+   "acc_mean": 0.8713124999999999,
+   "acc_std": 0.07069545711182579,
+   "auc_mean": 0.8680041666666666,
+   "auc_std": 0.049548055377246325,
+   "evals_per_stream": 150.0
+  },
+  "RPST-DA@+3%": {
+   "runs": 10,
+   "acc_mean": 0.9083750000000002,
+   "acc_std": 0.07233882947629162,
+   "auc_mean": 0.8964666666666666,
+   "auc_std": 0.0616396507545175,
+   "evals_per_stream": 150.0
+  },
+  "RPST-DA": {
+   "runs": 10,
+   "acc_mean": 0.8948750000000001,
+   "acc_std": 0.07237262517692723,
+   "auc_mean": 0.8951125,
+   "auc_std": 0.0553454195823828,
+   "evals_per_stream": 150.0
+  }
+ },
+ "tests": [
+  {
+   "first": "RPST-DA",
+   "second": "RPST-DA@-3%",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": 0.02356250000000002,
+   "ci95": [
+    -0.03837812499999998,
+    0.0907515625
+   ],
+   "wins": 5,
+   "ties": 0,
+   "losses": 5,
+   "p": 0.5234375,
+   "alternative": "two-sided",
+   "p_holm": 1.0
+  },
+  {
+   "first": "RPST-DA",
+   "second": "RPST-DA@+3%",
+   "metric": "deployed_acc",
+   "better": "higher",
+   "runs": 10,
+   "mean_diff": -0.013500000000000022,
+   "ci95": [
+    -0.085503125,
+    0.060939062499999974
+   ],
+   "wins": 4,
+   "ties": 1,
+   "losses": 5,
+   "p": 0.74609375,
+   "alternative": "two-sided",
+   "p_holm": 1.0
+  }
+ ]
+}
